@@ -1,0 +1,109 @@
+package com.movierental.controller;
+
+import com.movierental.model.User;
+import com.movierental.service.AuthService;
+import jakarta.servlet.http.HttpSession;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+@Controller
+public class AuthController {
+    private final AuthService authService;
+
+    public AuthController(AuthService authService) {
+        this.authService = authService;
+    }
+
+    @GetMapping("/")
+    public String home(HttpSession session) {
+        return session.getAttribute("userId") == null ? "redirect:/login" : "redirect:/movies";
+    }
+
+    @GetMapping("/login")
+    public String loginPage(HttpSession session) {
+        return session.getAttribute("userId") == null ? "login" : "redirect:/movies";
+    }
+
+    @PostMapping("/login")
+    public String login(
+            @RequestParam String email,
+            @RequestParam String password,
+            @RequestParam(defaultValue = "CUSTOMER") String accountType,
+            Model model,
+            HttpSession session
+    ) {
+        User user = authService.login(email, password).orElse(null);
+        if (user == null) {
+            model.addAttribute("error", "Invalid email or password.");
+            return "login";
+        }
+        String selectedAccountType = "RECRUITER".equalsIgnoreCase(accountType) ? "RECRUITER" : "CUSTOMER";
+        String userAccountType = user.getAccountType() == null ? "CUSTOMER" : user.getAccountType().toUpperCase();
+        if (!userAccountType.equals(selectedAccountType)) {
+            model.addAttribute("error", "Selected account type does not match this user.");
+            return "login";
+        }
+        session.setAttribute("userId", user.getUserId());
+        session.setAttribute("userName", user.getFullName());
+        session.setAttribute("accountType", userAccountType);
+        return "redirect:/movies";
+    }
+
+    @GetMapping("/register")
+    public String registerPage(HttpSession session) {
+        return session.getAttribute("userId") == null ? "register" : "redirect:/movies";
+    }
+
+    @PostMapping("/register")
+    public String register(
+            @RequestParam String fullName,
+            @RequestParam String email,
+            @RequestParam String password,
+            @RequestParam(required = false) String phone,
+            @RequestParam(defaultValue = "CUSTOMER") String accountType,
+            Model model
+    ) {
+        String result = authService.register(fullName, email, password, phone, accountType);
+        if (!"SUCCESS".equals(result)) {
+            model.addAttribute("error", result);
+            return "register";
+        }
+        model.addAttribute("success", "Registration successful. Please log in.");
+        return "login";
+    }
+
+    @GetMapping("/profile")
+    public String profile(Model model, HttpSession session) {
+        String userId = (String) session.getAttribute("userId");
+        if (userId == null) {
+            return "redirect:/login";
+        }
+        User user = authService.getUserById(userId).orElse(null);
+        if (user == null) {
+            return "redirect:/logout";
+        }
+        model.addAttribute("user", user);
+        return "profile";
+    }
+
+    @PostMapping("/profile/update")
+    public String updateProfile(@RequestParam String fullName, @RequestParam String phone, Model model, HttpSession session) {
+        String userId = (String) session.getAttribute("userId");
+        if (userId == null) {
+            return "redirect:/login";
+        }
+        String result = authService.updateProfile(userId, fullName, phone);
+        model.addAttribute("message", "SUCCESS".equals(result) ? "Profile updated successfully." : result);
+        model.addAttribute("user", authService.getUserById(userId).orElse(null));
+        return "profile";
+    }
+
+    @GetMapping("/logout")
+    public String logout(HttpSession session) {
+        session.invalidate();
+        return "redirect:/login";
+    }
+}

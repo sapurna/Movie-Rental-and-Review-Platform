@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Login | Movie Platform</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+    <link href="/css/app.css" rel="stylesheet">
+</head>
+<body class="auth-split-bg">
+<div class="container-fluid px-0 auth-split-wrap">
+    <div class="auth-split-left"></div>
+    <div class="auth-split-right">
+        <div class="auth-panel">
+            <div class="text-center mb-4">
+                <div class="auth-logo">🎬</div>
+                <h1 class="h2 fw-bold mb-2">Welcome back!</h1>
+                <p class="text-muted mb-0">Sign in to continue booking and reviewing movies.</p>
+            </div>
+
+            <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+            <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+
+            <form method="post" action="/login">
+                <input type="hidden" name="accountType" id="accountTypeInput" value="CUSTOMER">
+                <div class="auth-segment mb-3">
+                    <button class="segment-btn active" type="button" data-type="CUSTOMER">Customer</button>
+                    <button class="segment-btn" type="button" data-type="RECRUITER">Recruiter</button>
+                </div>
+
+                <div class="mb-3">
+                    <input class="form-control auth-input" type="email" name="email" placeholder="Email address" required>
+                </div>
+                <div class="mb-2">
+                    <input class="form-control auth-input" type="password" name="password" placeholder="Password" required>
+                </div>
+                <div class="text-end mb-3">
+                    <span class="small text-danger fw-semibold">Forgot password?</span>
+                </div>
+
+                <button class="btn auth-login-btn w-100 mb-3" type="submit">Login</button>
+            </form>
+
+            <p class="text-center mb-3">
+                Don't have an account? <a href="/register" class="text-danger fw-semibold text-decoration-none">Sign up</a>
+            </p>
+
+            <div class="auth-divider"><span>Or continue with</span></div>
+            <div class="social-row">
+                <a class="social-btn social-google" href="https://mail.google.com/" target="_blank" rel="noopener noreferrer" aria-label="Continue with Gmail">
+                    <i class="fa-brands fa-google"></i>
+                </a>
+                <a class="social-btn social-apple" href="https://www.apple.com/" target="_blank" rel="noopener noreferrer" aria-label="Continue with Apple">
+                    <i class="fa-brands fa-apple"></i>
+                </a>
+                <a class="social-btn social-facebook" href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer" aria-label="Continue with Facebook">
+                    <i class="fa-brands fa-facebook-f"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    const segmentButtons = document.querySelectorAll(".segment-btn");
+    const accountTypeInput = document.getElementById("accountTypeInput");
+    segmentButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+            segmentButtons.forEach((b) => b.classList.remove("active"));
+            button.classList.add("active");
+            accountTypeInput.value = button.dataset.type;
+        });
+    });
+</script>
+</body>
+</html>

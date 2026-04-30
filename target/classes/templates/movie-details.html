@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Movie Details | Movie Platform</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/app.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<nav class="navbar navbar-expand-lg bg-white border-bottom">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="/movies">Movie Platform</a>
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-dark btn-sm" href="/movies">Movies</a>
+            <a class="btn btn-outline-dark btn-sm" href="/bookings">My Bookings</a>
+            <a class="btn btn-dark btn-sm" href="/logout">Logout</a>
+        </div>
+    </div>
+</nav>
+<div class="container-fluid px-4 py-4">
+    <div th:if="${message}" class="alert alert-info" th:text="${message}"></div>
+    <div class="row g-4 align-items-stretch">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm h-100">
+                <img th:src="${movie.imageUrl}" class="card-img-top" style="height:320px; object-fit:cover;" alt="poster">
+                <div class="card-body">
+                    <h2 class="h4" th:text="${movie.title}"></h2>
+                    <p class="text-muted" th:text="${movie.genre + ' • ' + movie.duration}"></p>
+                    <p th:text="${movie.description}"></p>
+                    <div class="d-flex gap-3">
+                        <span class="badge text-bg-dark" th:text="'Normal: LKR ' + ${movie.normalPrice}"></span>
+                        <span class="badge text-bg-secondary" th:text="'Premium: LKR ' + ${movie.premiumPrice}"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body d-flex flex-column">
+                    <h3 class="h5 mb-3">Write a Review</h3>
+                    <form method="post" action="/reviews/add">
+                        <input type="hidden" name="movieId" th:value="${movie.movieId}">
+                        <div class="mb-3">
+                            <label class="form-label">Rating</label>
+                            <select class="form-select" name="rating">
+                                <option value="5">5 - Excellent</option>
+                                <option value="4">4 - Very Good</option>
+                                <option value="3">3 - Good</option>
+                                <option value="2">2 - Average</option>
+                                <option value="1">1 - Poor</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Comment</label>
+                            <textarea class="form-control" name="comment" rows="3" required></textarea>
+                        </div>
+                        <button class="btn btn-outline-dark w-100">Submit Review</button>
+                    </form>
+                    <hr class="my-4">
+                    <h3 class="h5">Customer Reviews</h3>
+                    <div class="review-scroll pe-1">
+                        <div th:each="review : ${reviews}" class="border rounded p-3 mb-2 bg-white">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <div class="rating-stars">
+                                        <span th:each="star : ${#numbers.sequence(1,5)}"
+                                              th:text="${star <= review.rating} ? '★' : '☆'"
+                                              th:classappend="${star <= review.rating} ? ' star-filled' : ' star-empty'"></span>
+                                    </div>
+                                    <small class="text-muted" th:text="${review.rating} + ' out of 5'"></small>
+                                </div>
+                                <form method="post" action="/reviews/delete" th:if="${review.userId == currentUserId}">
+                                    <input type="hidden" name="reviewId" th:value="${review.reviewId}">
+                                    <input type="hidden" name="movieId" th:value="${movie.movieId}">
+                                    <button class="btn btn-sm btn-outline-danger">Delete</button>
+                                </form>
+                            </div>
+                            <p class="mb-0 mt-1" th:text="${review.comment}"></p>
+                        </div>
+                        <p class="text-muted mb-0" th:if="${#lists.isEmpty(reviews)}">No reviews yet. Be the first to review.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mt-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                <h3 class="h5 mb-0">Select Seat</h3>
+                <div class="d-flex gap-2 align-items-center small">
+                    <span class="seat-legend seat-legend-premium"></span><span>Premium</span>
+                    <span class="seat-legend seat-legend-normal ms-2"></span><span>Normal</span>
+                    <span class="seat-legend seat-legend-selected ms-2"></span><span>Selected</span>
+                    <span class="seat-legend seat-legend-booked ms-2"></span><span>Booked</span>
+                </div>
+            </div>
+            <div class="seat-layout-shell">
+                <div class="screen-shape"></div>
+                <div class="screen-caption">All eyes this way please!</div>
+                <div id="seat-grid-main" class="seat-grid"></div>
+                <div class="balcony-divider"></div>
+                <div id="seat-grid-front" class="seat-grid mt-2"></div>
+                <div class="balcony-caption">Balcony</div>
+            </div>
+            <div class="d-flex justify-content-end mt-3">
+                <button type="button" class="btn btn-dark" id="openCartModalBtn">Proceed to Add to Cart</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addToCartModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add to Cart</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="/bookings/add" id="booking-form">
+                <div class="modal-body">
+                    <input type="hidden" name="movieId" th:value="${movie.movieId}">
+                    <div id="seatSelectionsContainer"></div>
+                    <div class="mb-3">
+                        <label class="form-label">Selected Seats</label>
+                        <div class="form-control bg-light" id="selectedSeatView">No seats selected</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Calculated Total</label>
+                        <div class="form-control bg-light fw-semibold" id="calculatedPrice">LKR 0.00</div>
+                    </div>
+                    <p class="small text-muted mb-0">You must select at least one seat to proceed.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-dark" type="submit">Add to Cart</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+    const bookedSeats = new Set(/*[[${bookedSeats}]]*/ []);
+    const normalPrice = Number(/*[[${movie.normalPrice}]]*/ 0);
+    const premiumPrice = Number(/*[[${movie.premiumPrice}]]*/ 0);
+
+    const mainRows = [
+        {row: "A", left: [16,15,14,13,12,11,10,9], right: [8,7,6,5,4,3,2,1], premium: false},
+        {row: "B", left: [16,15,14,13,12,11,10,9], right: [8,7,6,5,4,3,2,1], premium: false},
+        {row: "C", left: [16,15,14,13,12,11,10,9], right: [8,7,6,5,4,3,2,1], premium: false},
+        {row: "D", left: [16,15,14,13,12,11,10,9], right: [8,7,6,5,4,3,2,1], premium: false},
+        {row: "E", left: [16,15,14,13,12,11,10,9], right: [8,7,6,5,4,3,2,1], premium: false},
+        {row: "F", left: [16,15,14,13,12,11,10,9], right: [8,7,6,5,4,3,2,1], premium: false},
+        {row: "G", left: [16,15,14,13,12,11,10,9], right: [8,7,6,5,4,3,2,1], premium: false},
+        {row: "H", left: [16,15,14,13,12,11,10,9], right: [8,7,6,5,4,3,2,1], premium: false},
+        {row: "I", left: [18,17,16,15,14,13,12,11,10], right: [9,8,7,6,5,4,3,2,1], premium: true},
+        {row: "J", left: [18,17,16,15,14,13,12,11,10], right: [9,8,7,6,5,4,3,2,1], premium: true},
+        {row: "K", left: [18,17,16,15,14,13,12,11,10], right: [9,8,7,6,5,4,3,2,1], premium: true},
+        {row: "L", left: [18,17,16,15,14,13,12,11,10], right: [9,8,7,6,5,4,3,2,1], premium: true}
+    ];
+
+    const frontRows = [
+        {row: "M", left: [18,17,16,15,14,13,12,11,10], right: [9,8,7,6,5,4,3,2,1], premium: true},
+        {row: "N", left: [18,17,16,15,14,13,12,11,10], right: [9,8,7,6,5,4,3,2,1], premium: true},
+        {row: "BOX", left: [20,19,18,17,16,15,14,13,12,11], right: [10,9,8,7,6,5,4,3,2,1], premium: true}
+    ];
+
+    const seatGridMain = document.getElementById("seat-grid-main");
+    const seatGridFront = document.getElementById("seat-grid-front");
+    const seatSelectionsContainer = document.getElementById("seatSelectionsContainer");
+    const selectedSeatView = document.getElementById("selectedSeatView");
+    const calculatedPrice = document.getElementById("calculatedPrice");
+    const bookingForm = document.getElementById("booking-form");
+    const openCartModalBtn = document.getElementById("openCartModalBtn");
+    const modalElement = document.getElementById("addToCartModal");
+    const modal = new bootstrap.Modal(modalElement);
+
+    const selectedSeats = new Map();
+
+    function updateSelectionSummary() {
+        const seatTokens = [];
+        let total = 0;
+        selectedSeats.forEach((seatType, seatCode) => {
+            seatTokens.push(`${seatCode} (${seatType})`);
+            total += seatType === "PREMIUM" ? premiumPrice : normalPrice;
+        });
+        selectedSeatView.textContent = seatTokens.length ? seatTokens.join(", ") : "No seats selected";
+        calculatedPrice.textContent = `LKR ${total.toFixed(2)}`;
+    }
+
+    function renderHiddenSelections() {
+        seatSelectionsContainer.innerHTML = "";
+        selectedSeats.forEach((seatType, seatCode) => {
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = "seatSelections";
+            input.value = `${seatType}:${seatCode}`;
+            seatSelectionsContainer.appendChild(input);
+        });
+    }
+
+    function createSeatButton(row, seatNumber, premium) {
+        const seatCode = `${row}${seatNumber}`;
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = `seat-btn ${premium ? "seat-premium" : "seat-normal"}`;
+        btn.textContent = seatNumber;
+        btn.dataset.seatCode = seatCode;
+        btn.dataset.seatType = premium ? "PREMIUM" : "NORMAL";
+
+        if (bookedSeats.has(seatCode)) {
+            btn.classList.add("seat-booked");
+            btn.disabled = true;
+        }
+        return btn;
+    }
+
+    function toggleSingleSeat(btn) {
+        const seatCode = btn.dataset.seatCode;
+        if (selectedSeats.has(seatCode)) {
+            selectedSeats.delete(seatCode);
+            btn.classList.remove("seat-selected");
+        } else {
+            selectedSeats.set(seatCode, btn.dataset.seatType);
+            btn.classList.add("seat-selected");
+        }
+        updateSelectionSummary();
+    }
+
+    function createBoxSeatPair(row, seatNumberOne, seatNumberTwo, premium) {
+        const pairWrap = document.createElement("div");
+        pairWrap.className = "seat-pair";
+
+        const first = createSeatButton(row, seatNumberOne, premium);
+        const second = createSeatButton(row, seatNumberTwo, premium);
+        pairWrap.appendChild(first);
+        pairWrap.appendChild(second);
+
+        const seats = [first, second];
+        const pairHasBookedSeat = seats.some((seat) => seat.disabled);
+
+        if (pairHasBookedSeat) {
+            seats.forEach((seat) => {
+                seat.disabled = true;
+                seat.classList.add("seat-booked");
+            });
+            pairWrap.classList.add("seat-pair-booked");
+            return pairWrap;
+        }
+
+        pairWrap.addEventListener("click", () => {
+            const allSelected = seats.every((seat) => selectedSeats.has(seat.dataset.seatCode));
+            if (allSelected) {
+                seats.forEach((seat) => {
+                    selectedSeats.delete(seat.dataset.seatCode);
+                    seat.classList.remove("seat-selected");
+                });
+            } else {
+                seats.forEach((seat) => {
+                    selectedSeats.set(seat.dataset.seatCode, seat.dataset.seatType);
+                    seat.classList.add("seat-selected");
+                });
+            }
+            updateSelectionSummary();
+        });
+
+        return pairWrap;
+    }
+
+    function renderSection(grid, rowsToRender) {
+        rowsToRender.forEach(({row, left, right, premium}) => {
+            const rowWrap = document.createElement("div");
+            rowWrap.className = "seat-row-wrap";
+
+            const rowLabel = document.createElement("div");
+            rowLabel.className = "seat-row-label";
+            rowLabel.textContent = row;
+            rowWrap.appendChild(rowLabel);
+
+            const seatRow = document.createElement("div");
+            seatRow.className = "seat-row split-row";
+            if (row === "BOX") {
+                seatRow.classList.add("box-row");
+            }
+
+            const leftBlock = document.createElement("div");
+            leftBlock.className = "seat-block";
+            if (row === "BOX") {
+                for (let i = 0; i < left.length; i += 2) {
+                    leftBlock.appendChild(createBoxSeatPair(row, left[i], left[i + 1], premium));
+                }
+            } else {
+                left.forEach((seatNumber) => {
+                    const seatBtn = createSeatButton(row, seatNumber, premium);
+                    if (!seatBtn.disabled) {
+                        seatBtn.addEventListener("click", () => toggleSingleSeat(seatBtn));
+                    }
+                    leftBlock.appendChild(seatBtn);
+                });
+            }
+
+            const rightBlock = document.createElement("div");
+            rightBlock.className = "seat-block";
+            if (row === "BOX") {
+                for (let i = 0; i < right.length; i += 2) {
+                    rightBlock.appendChild(createBoxSeatPair(row, right[i], right[i + 1], premium));
+                }
+            } else {
+                right.forEach((seatNumber) => {
+                    const seatBtn = createSeatButton(row, seatNumber, premium);
+                    if (!seatBtn.disabled) {
+                        seatBtn.addEventListener("click", () => toggleSingleSeat(seatBtn));
+                    }
+                    rightBlock.appendChild(seatBtn);
+                });
+            }
+
+            seatRow.appendChild(leftBlock);
+            seatRow.appendChild(rightBlock);
+            rowWrap.appendChild(seatRow);
+            grid.appendChild(rowWrap);
+        });
+    }
+    renderSection(seatGridMain, mainRows);
+    renderSection(seatGridFront, frontRows);
+
+    openCartModalBtn.addEventListener("click", () => {
+        if (selectedSeats.size < 1) {
+            alert("Please select at least one seat to proceed.");
+            return;
+        }
+        renderHiddenSelections();
+        updateSelectionSummary();
+        modal.show();
+    });
+
+    bookingForm.addEventListener("submit", (event) => {
+        if (selectedSeats.size < 1) {
+            event.preventDefault();
+            alert("Please select at least one seat before adding to bookings.");
+        }
+    });
+
+    updateSelectionSummary();
+</script>
+</body>
+</html>
