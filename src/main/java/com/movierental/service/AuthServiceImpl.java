@@ -22,21 +22,20 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public String register(String fullName, String email, String password, String phone, String accountType) {
+    public String register(String fullName, String email, String password, String phone) {
         if (fullName == null || fullName.isBlank() || email == null || email.isBlank() || password == null || password.length() < 4) {
             return "Please provide valid registration details.";
         }
         if (userRepository.findByEmail(email).isPresent()) {
             return "Email is already registered.";
         }
-        String normalizedType = "RECRUITER".equalsIgnoreCase(accountType) ? "RECRUITER" : "CUSTOMER";
         User user = new User(
                 UUID.randomUUID().toString(),
                 fullName.trim(),
                 email.trim().toLowerCase(),
                 password,
                 phone == null ? "" : phone.trim(),
-                normalizedType
+                "CUSTOMER"
         );
         userRepository.save(user);
         return "SUCCESS";

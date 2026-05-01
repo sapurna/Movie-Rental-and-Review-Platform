@@ -7,7 +7,7 @@ import java.util.Optional;
 public interface AuthService {
     Optional<User> login(String email, String password);
 
-    String register(String fullName, String email, String password, String phone, String accountType);
+    String register(String fullName, String email, String password, String phone);
 
     Optional<User> getUserById(String userId);
 

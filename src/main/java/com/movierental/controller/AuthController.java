@@ -31,7 +31,6 @@ public class AuthController {
     public String login(
             @RequestParam String email,
             @RequestParam String password,
-            @RequestParam(defaultValue = "CUSTOMER") String accountType,
             Model model,
             HttpSession session
     ) {
@@ -40,15 +39,14 @@ public class AuthController {
             model.addAttribute("error", "Invalid email or password.");
             return "login";
         }
-        String selectedAccountType = "RECRUITER".equalsIgnoreCase(accountType) ? "RECRUITER" : "CUSTOMER";
         String userAccountType = user.getAccountType() == null ? "CUSTOMER" : user.getAccountType().toUpperCase();
-        if (!userAccountType.equals(selectedAccountType)) {
-            model.addAttribute("error", "Selected account type does not match this user.");
+        if (!"CUSTOMER".equals(userAccountType)) {
+            model.addAttribute("error", "Only customer login is supported.");
             return "login";
         }
         session.setAttribute("userId", user.getUserId());
         session.setAttribute("userName", user.getFullName());
-        session.setAttribute("accountType", userAccountType);
+        session.setAttribute("accountType", "CUSTOMER");
         return "redirect:/movies";
     }
 
@@ -63,10 +61,9 @@ public class AuthController {
             @RequestParam String email,
             @RequestParam String password,
             @RequestParam(required = false) String phone,
-            @RequestParam(defaultValue = "CUSTOMER") String accountType,
             Model model
     ) {
-        String result = authService.register(fullName, email, password, phone, accountType);
+        String result = authService.register(fullName, email, password, phone);
         if (!"SUCCESS".equals(result)) {
             model.addAttribute("error", result);
             return "register";
