@@ -42,7 +42,7 @@ public class BookingController {
             return "redirect:/login";
         }
         model.addAttribute("bookings", bookingService.getUserBookings(userId));
-        model.addAttribute("movies", movieService.getAllMovies(""));
+        model.addAttribute("movies", movieService.getAllMovies("", null));
         return "bookings";
     }
 

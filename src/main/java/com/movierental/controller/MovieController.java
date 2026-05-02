@@ -24,12 +24,19 @@ public class MovieController {
     }
 
     @GetMapping("/movies")
-    public String movies(@RequestParam(required = false) String q, HttpSession session, Model model) {
+    public String movies(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String type,
+            HttpSession session,
+            Model model) {
         if (session.getAttribute("userId") == null) {
             return "redirect:/login";
         }
+        String selectedType = (type == null || type.isBlank()) ? "Trending" : type.trim();
         model.addAttribute("query", q == null ? "" : q);
-        model.addAttribute("movies", movieService.getAllMovies(q));
+        model.addAttribute("selectedType", selectedType);
+        model.addAttribute("filterTypes", movieService.getGenreFilterOptions());
+        model.addAttribute("movies", movieService.getAllMovies(q, type));
         model.addAttribute("userName", session.getAttribute("userName"));
         return "movies";
     }
