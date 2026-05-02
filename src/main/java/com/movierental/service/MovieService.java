@@ -73,14 +73,14 @@ public class MovieService {
             return;
         }
         List<Movie> movies = new ArrayList<>();
-        movies.add(new Movie(UUID.randomUUID().toString(), "Inception", "Sci-Fi", "148 min", 1200, 1800, "A dream-heist thriller with layered storytelling.", "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=600"));
-        movies.add(new Movie(UUID.randomUUID().toString(), "Interstellar", "Adventure", "169 min", 1300, 1900, "A journey across space and time to save humanity.", "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=600"));
-        movies.add(new Movie(UUID.randomUUID().toString(), "The Dark Knight", "Action", "152 min", 1100, 1700, "Batman faces chaos in Gotham City.", "https://images.unsplash.com/photo-1517602302552-471fe67acf66?w=600"));
-        movies.add(new Movie(UUID.randomUUID().toString(), "The Grand Budapest Hotel", "Comedy", "99 min", 900, 1400, "A quirky concierge and lobby boy embroiled in a theft.", "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=600"));
-        movies.add(new Movie(UUID.randomUUID().toString(), "The Godfather", "Crime", "175 min", 1000, 1500, "The saga of the Corleone family.", "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=600"));
-        movies.add(new Movie(UUID.randomUUID().toString(), "Parasite", "Drama", "132 min", 950, 1450, "Class divide erupts in unexpected ways.", "https://images.unsplash.com/photo-1517602302552-471fe67acf66?w=600"));
-        movies.add(new Movie(UUID.randomUUID().toString(), "The Lord of the Rings", "Fantasy", "178 min", 1250, 1850, "An epic quest to destroy a powerful ring.", "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=600"));
-        movies.add(new Movie(UUID.randomUUID().toString(), "Hereditary", "Horror", "127 min", 1050, 1550, "A family unravels after tragedy.", "https://images.unsplash.com/photo-1509248961158-e54f6934749c?w=600"));
+        movies.add(new Movie(UUID.randomUUID().toString(), "Inception", "Sci-Fi", "148 min", 1200, 1800, "A dream-heist thriller with layered storytelling.", "/posters/inception.png"));
+        movies.add(new Movie(UUID.randomUUID().toString(), "Interstellar", "Adventure", "169 min", 1300, 1900, "A journey across space and time to save humanity.", "/posters/interstellar.png"));
+        movies.add(new Movie(UUID.randomUUID().toString(), "The Dark Knight", "Action", "152 min", 1100, 1700, "Batman faces chaos in Gotham City.", "/posters/the-dark-knight.png"));
+        movies.add(new Movie(UUID.randomUUID().toString(), "The Grand Budapest Hotel", "Comedy", "99 min", 900, 1400, "A quirky concierge and lobby boy embroiled in a theft.", "/posters/the-grand-budapest-hotel.png"));
+        movies.add(new Movie(UUID.randomUUID().toString(), "The Godfather", "Crime", "175 min", 1000, 1500, "The saga of the Corleone family.", "/posters/the-godfather.png"));
+        movies.add(new Movie(UUID.randomUUID().toString(), "Parasite", "Drama", "132 min", 950, 1450, "Class divide erupts in unexpected ways.", "/posters/parasite.png"));
+        movies.add(new Movie(UUID.randomUUID().toString(), "The Lord of the Rings", "Fantasy", "178 min", 1250, 1850, "An epic quest to destroy a powerful ring.", "/posters/the-lord-of-the-rings.png"));
+        movies.add(new Movie(UUID.randomUUID().toString(), "Hereditary", "Horror", "127 min", 1050, 1550, "A family unravels after tragedy.", "/posters/hereditary.png"));
         movieRepository.saveAll(movies);
     }
 }
