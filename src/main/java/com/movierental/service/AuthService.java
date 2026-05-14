@@ -12,4 +12,9 @@ public interface AuthService {
     Optional<User> getUserById(String userId);
 
     String updateProfile(String userId, String fullName, String phone);
+
+    /**
+     * @return "SUCCESS" or an error message
+     */
+    String changePassword(String userId, String oldPassword, String newPassword, String confirmPassword);
 }

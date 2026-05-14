@@ -2,13 +2,16 @@ com\movierental\MovieRentalApplication.class
 com\movierental\model\BookingRecord.class
 com\movierental\model\Movie.class
 com\movierental\service\AuthServiceImpl.class
-com\movierental\model\Booking.class
 com\movierental\model\Review.class
 com\movierental\model\PremiumBooking.class
 com\movierental\model\NormalBooking.class
+com\movierental\repository\ReviewRepository.class
+com\movierental\service\MovieService.class
+com\movierental\model\User.class
+com\movierental\repository\MovieRepository.class
+com\movierental\model\Booking.class
 com\movierental\controller\MovieController.class
 com\movierental\controller\ReviewController.class
-com\movierental\repository\ReviewRepository.class
 com\movierental\controller\AuthController.class
 com\movierental\repository\FileStorage.class
 com\movierental\repository\UserRepository.class
@@ -16,7 +19,4 @@ com\movierental\service\AuthService.class
 com\movierental\repository\BookingRepository.class
 com\movierental\controller\BookingController.class
 com\movierental\service\BookingService.class
-com\movierental\service\MovieService.class
 com\movierental\service\ReviewService.class
-com\movierental\model\User.class
-com\movierental\repository\MovieRepository.class

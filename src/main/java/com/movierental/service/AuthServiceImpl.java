@@ -58,4 +58,28 @@ public class AuthServiceImpl implements AuthService {
         userRepository.update(user);
         return "SUCCESS";
     }
+
+    @Override
+    public String changePassword(String userId, String oldPassword, String newPassword, String confirmPassword) {
+        if (oldPassword == null || oldPassword.isBlank()) {
+            return "Please enter your current password.";
+        }
+        if (newPassword == null || newPassword.length() < 4) {
+            return "New password must be at least 4 characters.";
+        }
+        if (!newPassword.equals(confirmPassword)) {
+            return "New password and confirmation do not match.";
+        }
+        Optional<User> userOptional = userRepository.findById(userId);
+        if (userOptional.isEmpty()) {
+            return "User not found.";
+        }
+        User user = userOptional.get();
+        if (!user.getPassword().equals(oldPassword)) {
+            return "Current password is incorrect.";
+        }
+        user.setPassword(newPassword);
+        userRepository.update(user);
+        return "SUCCESS";
+    }
 }
