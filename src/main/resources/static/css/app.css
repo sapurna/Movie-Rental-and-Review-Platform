@@ -450,6 +450,47 @@
     cursor: not-allowed;
 }
 
+/* BOX row pairs (class renamed to avoid clashing with JSP/JS) */
+.box-seat-pair {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    position: relative;
+    cursor: pointer;
+}
+
+.box-seat-pair::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 0.2rem;
+    bottom: 0.2rem;
+    border-left: 2px dotted #ffffff;
+    transform: translateX(-50%);
+    pointer-events: none;
+    z-index: 3;
+}
+
+.box-seat-pair .seat-btn {
+    position: relative;
+    z-index: 1;
+}
+
+.box-seat-pair .seat-btn:first-child {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.box-seat-pair .seat-btn:last-child {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    margin-left: -1px;
+}
+
+.box-seat-pair-booked {
+    cursor: not-allowed;
+}
+
 /* —— User profile (card layout) —— */
 .profile-page-bg {
     min-height: 100vh;

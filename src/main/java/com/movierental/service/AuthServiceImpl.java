@@ -63,6 +63,8 @@ public class AuthServiceImpl implements AuthService {
             return "SUCCESS";
         } catch (IllegalArgumentException ex) {
             return ex.getMessage();
+        } catch (java.io.IOException ex) {
+            return "Unable to save profile photo. Please check the uploads/profiles folder is writable.";
         } catch (Exception ex) {
             return "Unable to save profile photo. Please try again.";
         }

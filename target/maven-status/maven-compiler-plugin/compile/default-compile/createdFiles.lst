@@ -1,6 +1,7 @@
 com\movierental\MovieRentalApplication.class
 com\movierental\model\BookingRecord.class
 com\movierental\model\Movie.class
+com\movierental\config\WebMvcConfig.class
 com\movierental\service\AuthServiceImpl.class
 com\movierental\model\Review.class
 com\movierental\model\PremiumBooking.class

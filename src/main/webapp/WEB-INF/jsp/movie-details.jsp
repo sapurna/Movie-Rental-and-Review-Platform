@@ -101,7 +101,7 @@
                     <span class="seat-legend seat-legend-booked ms-2"></span><span>Booked</span>
                 </div>
             </div>
-            <div class="seat-layout-shell">
+            <div class="seat-layout-shell" id="seat-layout-shell">
                 <div class="screen-shape"></div>
                 <div class="screen-caption">All eyes this way please!</div>
                 <div id="seat-grid-main" class="seat-grid"></div>
@@ -109,8 +109,22 @@
                 <div id="seat-grid-front" class="seat-grid mt-2"></div>
                 <div class="balcony-caption">Balcony</div>
             </div>
+            <div class="seat-selection-summary mt-3 p-3 border rounded bg-white">
+                <p class="mb-1 small text-muted">Selected seats</p>
+                <p class="mb-2 fw-semibold" id="selectedSeatLabels">No seats selected</p>
+                <p class="mb-1 small text-muted">Total amount</p>
+                <p class="mb-0 fw-semibold" id="selectedSeatAmount">LKR 0.00</p>
+            </div>
+            <div class="seat-debug-panel mt-3 p-3 border border-warning rounded bg-warning-subtle">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <strong class="small text-danger">Seat booking debug (copy &amp; paste to report)</strong>
+                    <button type="button" class="btn btn-sm btn-outline-dark" id="copySeatDebugBtn">Copy log</button>
+                </div>
+                <pre id="seatDebugLog" class="small mb-0 bg-white border rounded p-2" style="max-height:220px;overflow:auto;white-space:pre-wrap;">Waiting for seat script...</pre>
+            </div>
             <div class="d-flex justify-content-end mt-3">
-                <button type="button" class="btn btn-dark" id="openCartModalBtn">Proceed to Add to Cart</button>
+                <button type="button" class="btn btn-dark" id="openCartModalBtn"
+                        data-bs-toggle="modal" data-bs-target="#addToCartModal">Proceed to Add to Cart</button>
             </div>
         </div>
     </div>
@@ -119,11 +133,11 @@
 <div class="modal fade" id="addToCartModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Add to Cart</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
             <form method="post" action="${ctx}/bookings/add" id="booking-form">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addToCartModalLabel">Add to Cart</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
                 <div class="modal-body">
                     <input type="hidden" name="movieId" value="${movie.movieId}">
                     <div id="seatSelectionsContainer"></div>
@@ -135,11 +149,10 @@
                         <label class="form-label">Calculated Total</label>
                         <div class="form-control bg-light fw-semibold" id="calculatedPrice">LKR 0.00</div>
                     </div>
-                    <p class="small text-muted mb-0">You must select at least one seat to proceed.</p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button class="btn btn-dark" type="submit">Add to Cart</button>
+                    <button type="submit" class="btn btn-dark">Add to Cart</button>
                 </div>
             </form>
         </div>
@@ -147,14 +160,72 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    const bookedSeats = new Set([
+<script id="seat-booking-data" type="application/json">
+{
+    "normalPrice": <c:out value="${movie.normalPrice}" default="0"/>,
+    "premiumPrice": <c:out value="${movie.premiumPrice}" default="0"/>,
+    "bookedSeats": [
         <c:forEach items="${bookedSeats}" var="seat" varStatus="st">
-        '<c:out value="${seat}" escapeXml="true"/>'<c:if test="${!st.last}">,</c:if>
+        "<c:out value="${seat}" escapeXml="true"/>"<c:if test="${!st.last}">,</c:if>
         </c:forEach>
-    ]);
-    const normalPrice = <c:out value="${movie.normalPrice}" default="0"/>;
-    const premiumPrice = <c:out value="${movie.premiumPrice}" default="0"/>;
+    ]
+}
+</script>
+<script>
+(function () {
+    const debugLines = [];
+    const debugEl = () => document.getElementById("seatDebugLog");
+
+    function seatDebug(msg, level) {
+        const line = "[" + new Date().toISOString().slice(11, 23) + "] " + (level || "INFO") + ": " + msg;
+        debugLines.push(line);
+        const el = debugEl();
+        if (el) {
+            el.textContent = debugLines.join("\n");
+            el.scrollTop = el.scrollHeight;
+        }
+        if (level === "ERROR") {
+            console.error(line);
+        } else {
+            console.log(line);
+        }
+    }
+
+    window.seatDebug = seatDebug;
+
+    window.onerror = function (message, source, lineno, colno, error) {
+        seatDebug("window.onerror: " + message + " at " + source + ":" + lineno + ":" + colno + (error && error.stack ? "\n" + error.stack : ""), "ERROR");
+        return false;
+    };
+
+    window.addEventListener("unhandledrejection", function (e) {
+        seatDebug("unhandledrejection: " + (e.reason && e.reason.stack ? e.reason.stack : e.reason), "ERROR");
+    });
+
+    function initSeatBooking() {
+    seatDebug("initSeatBooking started (readyState=" + document.readyState + ")");
+    seatDebug("bootstrap loaded: " + (typeof bootstrap !== "undefined"));
+    seatDebug("userAgent: " + navigator.userAgent);
+
+    try {
+    const dataEl = document.getElementById("seat-booking-data");
+    if (!dataEl) {
+        throw new Error("Missing #seat-booking-data element");
+    }
+    const rawJson = dataEl.textContent.trim();
+    seatDebug("JSON length: " + rawJson.length);
+    let seatData;
+    try {
+        seatData = JSON.parse(rawJson);
+        seatDebug("JSON parse OK: normalPrice=" + seatData.normalPrice + ", premiumPrice=" + seatData.premiumPrice + ", bookedSeats=" + (seatData.bookedSeats || []).length);
+    } catch (parseErr) {
+        seatDebug("JSON parse FAILED: " + parseErr.message, "ERROR");
+        seatDebug("Raw JSON:\n" + rawJson, "ERROR");
+        throw parseErr;
+    }
+    const bookedSeats = new Set(seatData.bookedSeats || []);
+    const normalPrice = Number(seatData.normalPrice) || 0;
+    const premiumPrice = Number(seatData.premiumPrice) || 0;
 
     const mainRows = [
         {row: "A", left: [16,15,14,13,12,11,10,9], right: [8,7,6,5,4,3,2,1], premium: false},
@@ -179,46 +250,92 @@
 
     const seatGridMain = document.getElementById("seat-grid-main");
     const seatGridFront = document.getElementById("seat-grid-front");
+    const seatLayoutShell = document.getElementById("seat-layout-shell");
     const seatSelectionsContainer = document.getElementById("seatSelectionsContainer");
+    const selectedSeatLabels = document.getElementById("selectedSeatLabels");
+    const selectedSeatAmount = document.getElementById("selectedSeatAmount");
     const selectedSeatView = document.getElementById("selectedSeatView");
     const calculatedPrice = document.getElementById("calculatedPrice");
     const bookingForm = document.getElementById("booking-form");
-    const openCartModalBtn = document.getElementById("openCartModalBtn");
     const modalElement = document.getElementById("addToCartModal");
-    const modal = new bootstrap.Modal(modalElement);
+    const copySeatDebugBtn = document.getElementById("copySeatDebugBtn");
+
+    const domCheck = {
+        "seat-grid-main": !!seatGridMain,
+        "seat-grid-front": !!seatGridFront,
+        "seat-layout-shell": !!seatLayoutShell,
+        "selectedSeatLabels": !!selectedSeatLabels,
+        "selectedSeatAmount": !!selectedSeatAmount,
+        "seatSelectionsContainer": !!seatSelectionsContainer,
+        "booking-form": !!bookingForm,
+        "addToCartModal": !!modalElement
+    };
+    seatDebug("DOM elements: " + JSON.stringify(domCheck));
+    Object.keys(domCheck).forEach(function (id) {
+        if (!domCheck[id]) {
+            seatDebug("MISSING element: #" + id, "ERROR");
+        }
+    });
+
+    if (copySeatDebugBtn) {
+        copySeatDebugBtn.addEventListener("click", function () {
+            const text = debugLines.join("\n");
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(function () {
+                    seatDebug("Log copied to clipboard");
+                }).catch(function (err) {
+                    seatDebug("Clipboard failed: " + err, "ERROR");
+                });
+            } else {
+                seatDebug("Clipboard API not available — select text in box and copy manually", "ERROR");
+            }
+        });
+    }
 
     const selectedSeats = new Map();
+
+    function getSeatInfo(btn) {
+        const seatCode = (btn.getAttribute("data-seat-code") || "").trim().toUpperCase();
+        const seatType = (btn.getAttribute("data-seat-type") || "NORMAL").trim().toUpperCase();
+        return { seatCode, seatType };
+    }
 
     function updateSelectionSummary() {
         const seatTokens = [];
         let total = 0;
-        selectedSeats.forEach((seatType, seatCode) => {
-            seatTokens.push(`${seatCode} (${seatType})`);
+        for (const [seatCode, seatType] of selectedSeats.entries()) {
+            seatTokens.push(seatCode + " (" + seatType + ")");
             total += seatType === "PREMIUM" ? premiumPrice : normalPrice;
-        });
-        selectedSeatView.textContent = seatTokens.length ? seatTokens.join(", ") : "No seats selected";
-        calculatedPrice.textContent = `LKR ${total.toFixed(2)}`;
+        }
+        const seatsText = seatTokens.length ? seatTokens.join(", ") : "No seats selected";
+        const totalText = "LKR " + total.toFixed(2);
+        if (selectedSeatLabels) selectedSeatLabels.textContent = seatsText;
+        if (selectedSeatAmount) selectedSeatAmount.textContent = totalText;
+        if (selectedSeatView) selectedSeatView.textContent = seatsText;
+        if (calculatedPrice) calculatedPrice.textContent = totalText;
+        seatDebug("updateSelectionSummary: count=" + selectedSeats.size + " text=\"" + seatsText + "\" total=\"" + totalText + "\"");
     }
 
     function renderHiddenSelections() {
+        if (!seatSelectionsContainer) return;
         seatSelectionsContainer.innerHTML = "";
-        selectedSeats.forEach((seatType, seatCode) => {
+        for (const [seatCode, seatType] of selectedSeats.entries()) {
             const input = document.createElement("input");
             input.type = "hidden";
             input.name = "seatSelections";
-            input.value = `${seatType}:${seatCode}`;
+            input.value = seatType + ":" + seatCode;
             seatSelectionsContainer.appendChild(input);
-        });
+        }
     }
 
     function createSeatButton(row, seatNumber, premium) {
-        const seatCode = `${row}${seatNumber}`;
+        const seatCode = row + seatNumber;
         const btn = document.createElement("button");
         btn.type = "button";
-        btn.className = `seat-btn ${premium ? "seat-premium" : "seat-normal"}`;
+        btn.className = "seat-btn " + (premium ? "seat-premium" : "seat-normal");
         btn.textContent = seatNumber;
-        btn.dataset.seatCode = seatCode;
-        btn.dataset.seatType = premium ? "PREMIUM" : "NORMAL";
+        btn.setAttribute("data-seat-code", seatCode);
+        btn.setAttribute("data-seat-type", premium ? "PREMIUM" : "NORMAL");
 
         if (bookedSeats.has(seatCode)) {
             btn.classList.add("seat-booked");
@@ -228,12 +345,16 @@
     }
 
     function toggleSingleSeat(btn) {
-        const seatCode = btn.dataset.seatCode;
+        const { seatCode, seatType } = getSeatInfo(btn);
+        if (!seatCode) {
+            seatDebug("toggleSingleSeat: missing data-seat-code on button", "ERROR");
+            return;
+        }
         if (selectedSeats.has(seatCode)) {
             selectedSeats.delete(seatCode);
             btn.classList.remove("seat-selected");
         } else {
-            selectedSeats.set(seatCode, btn.dataset.seatType);
+            selectedSeats.set(seatCode, seatType);
             btn.classList.add("seat-selected");
         }
         updateSelectionSummary();
@@ -241,7 +362,7 @@
 
     function createBoxSeatPair(row, seatNumberOne, seatNumberTwo, premium) {
         const pairWrap = document.createElement("div");
-        pairWrap.className = "seat-pair";
+        pairWrap.className = "box-seat-pair";
 
         const first = createSeatButton(row, seatNumberOne, premium);
         const second = createSeatButton(row, seatNumberTwo, premium);
@@ -256,25 +377,9 @@
                 seat.disabled = true;
                 seat.classList.add("seat-booked");
             });
-            pairWrap.classList.add("seat-pair-booked");
+            pairWrap.classList.add("box-seat-pair-booked");
             return pairWrap;
         }
-
-        pairWrap.addEventListener("click", () => {
-            const allSelected = seats.every((seat) => selectedSeats.has(seat.dataset.seatCode));
-            if (allSelected) {
-                seats.forEach((seat) => {
-                    selectedSeats.delete(seat.dataset.seatCode);
-                    seat.classList.remove("seat-selected");
-                });
-            } else {
-                seats.forEach((seat) => {
-                    selectedSeats.set(seat.dataset.seatCode, seat.dataset.seatType);
-                    seat.classList.add("seat-selected");
-                });
-            }
-            updateSelectionSummary();
-        });
 
         return pairWrap;
     }
@@ -303,11 +408,7 @@
                 }
             } else {
                 left.forEach((seatNumber) => {
-                    const seatBtn = createSeatButton(row, seatNumber, premium);
-                    if (!seatBtn.disabled) {
-                        seatBtn.addEventListener("click", () => toggleSingleSeat(seatBtn));
-                    }
-                    leftBlock.appendChild(seatBtn);
+                    leftBlock.appendChild(createSeatButton(row, seatNumber, premium));
                 });
             }
 
@@ -319,11 +420,7 @@
                 }
             } else {
                 right.forEach((seatNumber) => {
-                    const seatBtn = createSeatButton(row, seatNumber, premium);
-                    if (!seatBtn.disabled) {
-                        seatBtn.addEventListener("click", () => toggleSingleSeat(seatBtn));
-                    }
-                    rightBlock.appendChild(seatBtn);
+                    rightBlock.appendChild(createSeatButton(row, seatNumber, premium));
                 });
             }
 
@@ -333,27 +430,115 @@
             grid.appendChild(rowWrap);
         });
     }
-    renderSection(seatGridMain, mainRows);
-    renderSection(seatGridFront, frontRows);
+    if (seatGridMain) renderSection(seatGridMain, mainRows);
+    if (seatGridFront) renderSection(seatGridFront, frontRows);
+    const seatBtnCount = document.querySelectorAll(".seat-btn").length;
+    const sampleBtn = document.querySelector(".seat-btn");
+    seatDebug("Seat buttons rendered: " + seatBtnCount);
+    if (sampleBtn) {
+        seatDebug("Sample seat data-seat-code=" + sampleBtn.getAttribute("data-seat-code"));
+    }
+    if (seatBtnCount === 0) {
+        seatDebug("No seat buttons in DOM — grid did not render", "ERROR");
+    }
 
-    openCartModalBtn.addEventListener("click", () => {
-        if (selectedSeats.size < 1) {
-            alert("Please select at least one seat to proceed.");
-            return;
+    function toggleBoxPair(pair) {
+        const seats = Array.from(pair.querySelectorAll(".seat-btn:not(:disabled)"));
+        if (seats.length === 0) return;
+        const allSelected = seats.every((seat) => selectedSeats.has(getSeatInfo(seat).seatCode));
+        if (allSelected) {
+            seats.forEach((seat) => {
+                const { seatCode } = getSeatInfo(seat);
+                if (seatCode) {
+                    selectedSeats.delete(seatCode);
+                }
+                seat.classList.remove("seat-selected");
+            });
+        } else {
+            seats.forEach((seat) => {
+                const { seatCode, seatType } = getSeatInfo(seat);
+                if (!seatCode) return;
+                selectedSeats.set(seatCode, seatType);
+                seat.classList.add("seat-selected");
+            });
         }
-        renderHiddenSelections();
         updateSelectionSummary();
-        modal.show();
-    });
+    }
 
-    bookingForm.addEventListener("submit", (event) => {
-        if (selectedSeats.size < 1) {
-            event.preventDefault();
-            alert("Please select at least one seat before adding to bookings.");
-        }
-    });
+    if (seatLayoutShell) {
+        seatLayoutShell.addEventListener("click", (event) => {
+            const seatBtn = event.target.closest(".seat-btn");
+            if (!seatBtn) {
+                seatDebug("click ignored — not a seat");
+                return;
+            }
+            if (seatBtn.disabled) {
+                seatDebug("click ignored — seat booked/disabled");
+                return;
+            }
+            const pair = seatBtn.closest(".box-seat-pair");
+            const inBoxRow = !!seatBtn.closest(".box-row");
+            seatDebug("seat click: " + getSeatInfo(seatBtn).seatCode + " boxRow=" + inBoxRow);
+            if (pair && inBoxRow && !pair.classList.contains("box-seat-pair-booked")) {
+                toggleBoxPair(pair);
+                return;
+            }
+            toggleSingleSeat(seatBtn);
+        });
+        seatDebug("Click listener attached on #seat-layout-shell");
+    } else {
+        seatDebug("Cannot attach click listener — #seat-layout-shell missing", "ERROR");
+    }
+
+    if (modalElement) {
+        modalElement.addEventListener("show.bs.modal", (event) => {
+            seatDebug("modal show.bs.modal — selected count=" + selectedSeats.size);
+            if (selectedSeats.size < 1) {
+                event.preventDefault();
+                seatDebug("modal blocked — no seats", "ERROR");
+                alert("Please select at least one seat to proceed.");
+                return;
+            }
+            updateSelectionSummary();
+            renderHiddenSelections();
+            const hiddenCount = seatSelectionsContainer ? seatSelectionsContainer.querySelectorAll('input[name="seatSelections"]').length : 0;
+            seatDebug("hidden inputs before submit: " + hiddenCount);
+        });
+    } else {
+        seatDebug("Modal element missing", "ERROR");
+    }
+
+    if (bookingForm) {
+        bookingForm.addEventListener("submit", (event) => {
+            seatDebug("form submit — selected count=" + selectedSeats.size);
+            if (selectedSeats.size < 1) {
+                event.preventDefault();
+                seatDebug("submit blocked — no seats", "ERROR");
+                alert("Please select at least one seat before adding to bookings.");
+                return;
+            }
+            renderHiddenSelections();
+        });
+    }
 
     updateSelectionSummary();
+    seatDebug("Init complete — click a seat and watch this log");
+    } catch (err) {
+        seatDebug("INIT FAILED: " + err.message, "ERROR");
+        if (err.stack) {
+            seatDebug(err.stack, "ERROR");
+        }
+    }
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initSeatBooking);
+        seatDebug("Waiting for DOMContentLoaded (registered listener)");
+    } else {
+        seatDebug("Document already loaded — running init immediately");
+        initSeatBooking();
+    }
+})();
 </script>
 </main>
 <%@ include file="/WEB-INF/jsp/fragments/footer.jspf" %>

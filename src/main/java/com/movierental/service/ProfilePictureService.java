@@ -4,27 +4,29 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Stream;
 
 @Service
 public class ProfilePictureService {
-    private static final Path UPLOAD_DIR = Paths.get("src/main/resources/static/posters/profiles");
-    private static final long MAX_BYTES = 5 * 1024 * 1024;
-    private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
-            "image/jpeg",
-            "image/png",
-            "image/webp",
-            "image/gif"
+    private static final String UPLOAD_FOLDER = "uploads/profiles";
+    private static final List<Path> LEGACY_DIRS = List.of(
+            Paths.get("src/main/resources/static/posters/profiles"),
+            Paths.get("target/classes/static/posters/profiles")
     );
+    private static final List<String> KNOWN_EXTENSIONS = List.of("jpg", "jpeg", "png", "webp", "gif");
+    private static final long MAX_BYTES = 5 * 1024 * 1024;
     private static final Map<String, String> EXTENSION_BY_CONTENT_TYPE = Map.of(
             "image/jpeg", "jpg",
+            "image/jpg", "jpg",
+            "image/pjpeg", "jpg",
             "image/png", "png",
             "image/webp", "webp",
             "image/gif", "gif"
@@ -38,26 +40,88 @@ public class ProfilePictureService {
             throw new IllegalArgumentException("Photo must be 5 MB or smaller.");
         }
 
-        String contentType = file.getContentType();
-        if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType.toLowerCase(Locale.ROOT))) {
+        String extension = resolveExtension(file);
+        if (extension == null) {
             throw new IllegalArgumentException("Only JPG, PNG, WEBP, or GIF images are allowed.");
         }
 
-        String extension = EXTENSION_BY_CONTENT_TYPE.get(contentType.toLowerCase(Locale.ROOT));
-        Files.createDirectories(UPLOAD_DIR);
-        deleteExistingPictures(userId);
+        String fileName = userId + "." + extension;
+        deleteAllProfilePictures(userId);
 
-        Path destination = UPLOAD_DIR.resolve(userId + "." + extension);
-        Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
+        Path uploadDir = Paths.get(UPLOAD_FOLDER).toAbsolutePath().normalize();
+        Files.createDirectories(uploadDir);
+        Path destination = uploadDir.resolve(fileName);
 
-        return "/posters/profiles/" + userId + "." + extension;
+        try (InputStream inputStream = file.getInputStream()) {
+            Files.copy(inputStream, destination, StandardCopyOption.REPLACE_EXISTING);
+        }
+
+        return "/posters/profiles/" + fileName;
     }
 
-    private void deleteExistingPictures(String userId) throws IOException {
-        if (!Files.exists(UPLOAD_DIR)) {
+    private String resolveExtension(MultipartFile file) {
+        String contentType = normalizeContentType(file.getContentType());
+        if (EXTENSION_BY_CONTENT_TYPE.containsKey(contentType)) {
+            return EXTENSION_BY_CONTENT_TYPE.get(contentType);
+        }
+
+        if ("application/octet-stream".equals(contentType)) {
+            String fromName = extensionFromFileName(file.getOriginalFilename());
+            if (fromName != null) {
+                return fromName;
+            }
+        }
+
+        return extensionFromFileName(file.getOriginalFilename());
+    }
+
+    private String extensionFromFileName(String fileName) {
+        if (fileName == null || fileName.isBlank()) {
+            return null;
+        }
+        String lower = fileName.toLowerCase(Locale.ROOT);
+        if (lower.endsWith(".jpeg") || lower.endsWith(".jpg")) {
+            return "jpg";
+        }
+        if (lower.endsWith(".png")) {
+            return "png";
+        }
+        if (lower.endsWith(".webp")) {
+            return "webp";
+        }
+        if (lower.endsWith(".gif")) {
+            return "gif";
+        }
+        return null;
+    }
+
+    private String normalizeContentType(String contentType) {
+        if (contentType == null) {
+            return "";
+        }
+        return contentType.toLowerCase(Locale.ROOT).split(";")[0].trim();
+    }
+
+    private void deleteAllProfilePictures(String userId) {
+        try {
+            Path uploadDir = Paths.get(UPLOAD_FOLDER).toAbsolutePath().normalize();
+            deleteInDirectory(uploadDir, userId);
+            for (Path legacyDir : LEGACY_DIRS) {
+                deleteInDirectory(legacyDir.toAbsolutePath().normalize(), userId);
+            }
+        } catch (IOException ignored) {
+            // do not block upload if old file cleanup fails
+        }
+    }
+
+    private void deleteInDirectory(Path directory, String userId) throws IOException {
+        if (!Files.exists(directory)) {
             return;
         }
-        try (Stream<Path> files = Files.list(UPLOAD_DIR)) {
+        for (String ext : KNOWN_EXTENSIONS) {
+            Files.deleteIfExists(directory.resolve(userId + "." + ext));
+        }
+        try (Stream<Path> files = Files.list(directory)) {
             files.filter(path -> path.getFileName().toString().startsWith(userId + "."))
                     .forEach(path -> {
                         try {

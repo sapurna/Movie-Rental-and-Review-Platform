@@ -2,6 +2,8 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <c:set var="ctx" value="${pageContext.request.contextPath}"/>
+<c:set var="avatarPath" value="${not empty profileImageSrc ? profileImageSrc : user.displayProfileImageUrl}"/>
+<c:set var="avatarUrl" value="${ctx}${avatarPath}"/>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -24,7 +26,10 @@
                     <h1 class="profile-card-hero-title">User Profile</h1>
                 </div>
                 <div class="profile-avatar-wrap">
-                    <img id="profileAvatarImg" class="profile-avatar" src="${ctx}${profileImageSrc}" alt="Profile picture" width="160" height="160">
+                    <img id="profileAvatarImg" class="profile-avatar"
+                         src="${avatarUrl}?v=${profileImageCacheKey}"
+                         data-profile-src="${avatarUrl}"
+                         alt="Profile picture of ${user.fullName}" width="160" height="160">
                     <button type="button" class="profile-cam-btn" id="profileCamBtn" aria-label="Change profile photo" title="Change profile photo" data-bs-toggle="modal" data-bs-target="#profilePhotoModal">
                         <i class="fa-solid fa-camera fa-xs"></i>
                     </button>
@@ -159,15 +164,29 @@
             }
         }
 
+        function setAvatarSrc(url) {
+            if (avatarImg && url) {
+                avatarImg.src = url;
+            }
+        }
+
         function previewAndSubmit(file) {
             if (!file || !profilePhotoForm) {
                 return;
             }
             if (avatarImg) {
-                avatarImg.src = URL.createObjectURL(file);
+                setAvatarSrc(URL.createObjectURL(file));
             }
             hidePhotoModal();
             profilePhotoForm.submit();
+        }
+
+        if (avatarImg) {
+            const baseSrc = avatarImg.getAttribute("data-profile-src");
+            const cacheKey = "${profileImageCacheKey}";
+            if (baseSrc) {
+                setAvatarSrc(baseSrc + "?v=" + cacheKey);
+            }
         }
 
         if (profilePhotoInput) {

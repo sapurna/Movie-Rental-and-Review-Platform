@@ -89,6 +89,7 @@ public class AuthController {
         }
         model.addAttribute("user", user);
         model.addAttribute("profileImageSrc", user.getDisplayProfileImageUrl());
+        model.addAttribute("profileImageCacheKey", resolveProfileImageCacheKey(session, user));
         model.addAttribute("totalBookedTickets", bookingService.getUserBookings(userId).size());
         return "profile";
     }
@@ -109,7 +110,15 @@ public class AuthController {
         }
         String result = authService.uploadProfilePicture(userId, photo);
         if ("SUCCESS".equals(result)) {
+            long version = System.currentTimeMillis();
+            session.setAttribute("profileImageVersion", version);
+            User updatedUser = authService.getUserById(userId).orElse(null);
+            if (updatedUser != null) {
+                redirectAttributes.addFlashAttribute("profileImageSrc", updatedUser.getDisplayProfileImageUrl());
+                redirectAttributes.addFlashAttribute("profileImageCacheKey", version);
+            }
             redirectAttributes.addFlashAttribute("message", "Profile photo updated successfully.");
+            redirectAttributes.addFlashAttribute("photoUpdated", true);
         } else {
             redirectAttributes.addFlashAttribute("photoError", result);
             redirectAttributes.addFlashAttribute("openPhotoModal", true);
@@ -150,5 +159,13 @@ public class AuthController {
     public String logout(HttpSession session) {
         session.invalidate();
         return "redirect:/login";
+    }
+
+    private static String resolveProfileImageCacheKey(HttpSession session, User user) {
+        Object version = session.getAttribute("profileImageVersion");
+        if (version != null) {
+            return String.valueOf(version);
+        }
+        return String.valueOf(System.currentTimeMillis());
     }
 }
