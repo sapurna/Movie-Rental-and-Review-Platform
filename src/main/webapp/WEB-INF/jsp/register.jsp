@@ -1,16 +1,19 @@
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<c:set var="ctx" value="${pageContext.request.contextPath}"/>
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Register | Cinevora</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
-    <link href="/css/app.css" rel="stylesheet">
+    <link rel="stylesheet" href="${ctx}/css/app.css">
 </head>
 <body class="auth-bg cinevora-page d-flex flex-column min-vh-100">
 <header class="cinevora-auth-heading">
-    <a href="/login" class="cinevora-brand">
+    <a href="${ctx}/login" class="cinevora-brand">
         <span class="cinevora-brand__icon" aria-hidden="true"><i class="fa-solid fa-clapperboard"></i></span>
         <span class="cinevora-brand__text">
             <span class="cinevora-brand__name">Cinevora</span>
@@ -26,8 +29,10 @@
                 <div class="card-body p-4 p-md-5">
                     <h1 class="h3 fw-bold mb-1">Create Account</h1>
                     <p class="text-muted mb-4">Join Cinevora to discover films and book your next show.</p>
-                    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
-                    <form method="post" action="/register">
+                    <c:if test="${not empty error}">
+                        <div class="alert alert-danger">${error}</div>
+                    </c:if>
+                    <form method="post" action="${ctx}/register">
                         <div class="mb-3">
                             <label class="form-label">Full Name</label>
                             <input class="form-control" name="fullName" required>
@@ -47,7 +52,7 @@
                         <button class="btn btn-dark w-100" type="submit">Register</button>
                     </form>
                     <p class="text-center text-muted mt-4 mb-0">
-                        Already registered? <a href="/login" class="text-decoration-none fw-semibold">Login</a>
+                        Already registered? <a href="${ctx}/login" class="text-decoration-none fw-semibold">Login</a>
                     </p>
                 </div>
             </div>
@@ -55,6 +60,6 @@
     </div>
 </div>
 </main>
-<footer th:replace="~{fragments/footer :: footer}"></footer>
+<%@ include file="/WEB-INF/jsp/fragments/footer.jspf" %>
 </body>
 </html>

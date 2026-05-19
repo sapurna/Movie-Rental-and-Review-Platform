@@ -1,0 +1,19 @@
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<c:set var="ctx" value="${pageContext.request.contextPath}"/>
+<nav class="navbar navbar-expand-lg cinevora-navbar border-bottom">
+    <div class="container">
+        <a class="navbar-brand cinevora-brand" href="${ctx}/movies">
+            <span class="cinevora-brand__icon" aria-hidden="true"><i class="fa-solid fa-clapperboard"></i></span>
+            <span class="cinevora-brand__text">
+                <span class="cinevora-brand__name">Cinevora</span>
+                <span class="cinevora-brand__tagline">Movie Rental &amp; Reviews</span>
+            </span>
+        </a>
+        <div class="d-flex gap-2 flex-wrap">
+            <a class="btn btn-outline-dark btn-sm" href="${ctx}/movies">Movies</a>
+            <a class="btn btn-outline-dark btn-sm" href="${ctx}/bookings">My Bookings</a>
+            <a class="btn btn-outline-dark btn-sm" href="${ctx}/profile">Profile</a>
+            <a class="btn btn-dark btn-sm" href="${ctx}/logout">Logout</a>
+        </div>
+    </div>
+</nav>

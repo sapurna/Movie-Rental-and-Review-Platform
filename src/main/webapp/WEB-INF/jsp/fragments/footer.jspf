@@ -1,7 +1,6 @@
-<!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
-<body>
-<footer th:fragment="footer" class="cinevora-footer">
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<c:set var="ctx" value="${pageContext.request.contextPath}"/>
+<footer class="cinevora-footer">
     <div class="container">
         <div class="row g-4 align-items-start">
             <div class="col-md-5">
@@ -15,9 +14,9 @@
             <div class="col-md-3 col-6">
                 <h2 class="cinevora-footer-heading">Explore</h2>
                 <ul class="cinevora-footer-links list-unstyled mb-0">
-                    <li><a href="/movies">Movies</a></li>
-                    <li><a href="/bookings">My Bookings</a></li>
-                    <li><a href="/profile">Profile</a></li>
+                    <li><a href="${ctx}/movies">Movies</a></li>
+                    <li><a href="${ctx}/bookings">My Bookings</a></li>
+                    <li><a href="${ctx}/profile">Profile</a></li>
                 </ul>
             </div>
             <div class="col-md-4 col-6">
@@ -29,10 +28,6 @@
             </div>
         </div>
         <hr class="cinevora-footer-divider">
-        <p class="cinevora-footer-copy text-center mb-0">
-            &copy; 2026 Cinevora. All rights reserved.
-        </p>
+        <p class="cinevora-footer-copy text-center mb-0">&copy; 2026 Cinevora. All rights reserved.</p>
     </div>
 </footer>
-</body>
-</html>

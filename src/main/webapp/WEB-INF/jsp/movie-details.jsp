@@ -1,30 +1,35 @@
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<c:set var="ctx" value="${pageContext.request.contextPath}"/>
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Movie Details | Cinevora</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
-    <link href="/css/app.css" rel="stylesheet">
+    <link rel="stylesheet" href="${ctx}/css/app.css">
 </head>
 <body class="bg-light cinevora-page d-flex flex-column min-vh-100">
-<nav th:replace="~{fragments/navbar :: navbar}"></nav>
-<header th:replace="~{fragments/site-header :: siteHeader}"></header>
+<%@ include file="/WEB-INF/jsp/fragments/navbar.jspf" %>
+<%@ include file="/WEB-INF/jsp/fragments/site-header.jspf" %>
 <main class="flex-grow-1">
 <div class="container-fluid px-4 py-4">
-    <div th:if="${message}" class="alert alert-info" th:text="${message}"></div>
+    <c:if test="${not empty message}">
+        <div class="alert alert-info">${message}</div>
+    </c:if>
     <div class="row g-4 align-items-stretch">
         <div class="col-lg-8">
             <div class="card border-0 shadow-sm h-100">
-                <img th:src="${movie.imageUrl}" class="card-img-top" style="height:320px; object-fit:cover;" alt="poster">
+                <img src="${ctx}${movie.imageUrl}" class="card-img-top" style="height:320px; object-fit:cover;" alt="poster">
                 <div class="card-body">
-                    <h2 class="h4" th:text="${movie.title}"></h2>
-                    <p class="text-muted" th:text="${movie.genre + ' • ' + movie.duration}"></p>
-                    <p th:text="${movie.description}"></p>
+                    <h2 class="h4">${movie.title}</h2>
+                    <p class="text-muted">${movie.genre} &bull; ${movie.duration}</p>
+                    <p>${movie.description}</p>
                     <div class="d-flex gap-3">
-                        <span class="badge text-bg-dark" th:text="'Normal: LKR ' + ${movie.normalPrice}"></span>
-                        <span class="badge text-bg-secondary" th:text="'Premium: LKR ' + ${movie.premiumPrice}"></span>
+                        <span class="badge text-bg-dark">Normal: LKR ${movie.normalPrice}</span>
+                        <span class="badge text-bg-secondary">Premium: LKR ${movie.premiumPrice}</span>
                     </div>
                 </div>
             </div>
@@ -33,8 +38,8 @@
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body d-flex flex-column">
                     <h3 class="h5 mb-3">Write a Review</h3>
-                    <form method="post" action="/reviews/add">
-                        <input type="hidden" name="movieId" th:value="${movie.movieId}">
+                    <form method="post" action="${ctx}/reviews/add">
+                        <input type="hidden" name="movieId" value="${movie.movieId}">
                         <div class="mb-3">
                             <label class="form-label">Rating</label>
                             <select class="form-select" name="rating">
@@ -54,25 +59,31 @@
                     <hr class="my-4">
                     <h3 class="h5">Customer Reviews</h3>
                     <div class="review-scroll pe-1">
-                        <div th:each="review : ${reviews}" class="border rounded p-3 mb-2 bg-white">
+                        <c:forEach items="${reviews}" var="review">
+                        <div class="border rounded p-3 mb-2 bg-white">
                             <div class="d-flex justify-content-between">
                                 <div>
                                     <div class="rating-stars">
-                                        <span th:each="star : ${#numbers.sequence(1,5)}"
-                                              th:text="${star <= review.rating} ? '★' : '☆'"
-                                              th:classappend="${star <= review.rating} ? ' star-filled' : ' star-empty'"></span>
+                                        <c:forEach begin="1" end="5" var="star">
+                                            <span class="${star le review.rating ? ' star-filled' : ' star-empty'}">${star le review.rating ? '★' : '☆'}</span>
+                                        </c:forEach>
                                     </div>
-                                    <small class="text-muted" th:text="${review.rating} + ' out of 5'"></small>
+                                    <small class="text-muted">${review.rating} out of 5</small>
                                 </div>
-                                <form method="post" action="/reviews/delete" th:if="${review.userId == currentUserId}">
-                                    <input type="hidden" name="reviewId" th:value="${review.reviewId}">
-                                    <input type="hidden" name="movieId" th:value="${movie.movieId}">
+                                <c:if test="${review.userId == currentUserId}">
+                                <form method="post" action="${ctx}/reviews/delete">
+                                    <input type="hidden" name="reviewId" value="${review.reviewId}">
+                                    <input type="hidden" name="movieId" value="${movie.movieId}">
                                     <button class="btn btn-sm btn-outline-danger">Delete</button>
                                 </form>
+                                </c:if>
                             </div>
-                            <p class="mb-0 mt-1" th:text="${review.comment}"></p>
+                            <p class="mb-0 mt-1">${review.comment}</p>
                         </div>
-                        <p class="text-muted mb-0" th:if="${#lists.isEmpty(reviews)}">No reviews yet. Be the first to review.</p>
+                        </c:forEach>
+                        <c:if test="${empty reviews}">
+                        <p class="text-muted mb-0">No reviews yet. Be the first to review.</p>
+                        </c:if>
                     </div>
                 </div>
             </div>
@@ -112,9 +123,9 @@
                 <h5 class="modal-title">Add to Cart</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form method="post" action="/bookings/add" id="booking-form">
+            <form method="post" action="${ctx}/bookings/add" id="booking-form">
                 <div class="modal-body">
-                    <input type="hidden" name="movieId" th:value="${movie.movieId}">
+                    <input type="hidden" name="movieId" value="${movie.movieId}">
                     <div id="seatSelectionsContainer"></div>
                     <div class="mb-3">
                         <label class="form-label">Selected Seats</label>
@@ -136,10 +147,14 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script th:inline="javascript">
-    const bookedSeats = new Set(/*[[${bookedSeats}]]*/ []);
-    const normalPrice = Number(/*[[${movie.normalPrice}]]*/ 0);
-    const premiumPrice = Number(/*[[${movie.premiumPrice}]]*/ 0);
+<script>
+    const bookedSeats = new Set([
+        <c:forEach items="${bookedSeats}" var="seat" varStatus="st">
+        '<c:out value="${seat}" escapeXml="true"/>'<c:if test="${!st.last}">,</c:if>
+        </c:forEach>
+    ]);
+    const normalPrice = <c:out value="${movie.normalPrice}" default="0"/>;
+    const premiumPrice = <c:out value="${movie.premiumPrice}" default="0"/>;
 
     const mainRows = [
         {row: "A", left: [16,15,14,13,12,11,10,9], right: [8,7,6,5,4,3,2,1], premium: false},
@@ -341,6 +356,6 @@
     updateSelectionSummary();
 </script>
 </main>
-<footer th:replace="~{fragments/footer :: footer}"></footer>
+<%@ include file="/WEB-INF/jsp/fragments/footer.jspf" %>
 </body>
 </html>

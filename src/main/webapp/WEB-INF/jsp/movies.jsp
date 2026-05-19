@@ -1,12 +1,15 @@
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<c:set var="ctx" value="${pageContext.request.contextPath}"/>
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Movies | Cinevora</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="stylesheet" href="${ctx}/css/app.css">
     <style>
         .genre-scroll {
             overflow-x: auto;
@@ -96,18 +99,20 @@
     </style>
 </head>
 <body class="bg-white text-dark cinevora-page d-flex flex-column min-vh-100">
-<nav th:replace="~{fragments/navbar :: navbar}"></nav>
-<header th:replace="~{fragments/site-header :: siteHeader}"></header>
+<%@ include file="/WEB-INF/jsp/fragments/navbar.jspf" %>
+<%@ include file="/WEB-INF/jsp/fragments/site-header.jspf" %>
 <main class="flex-grow-1">
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
         <div>
             <h1 class="h3 fw-bold mb-0">Discover Movies</h1>
-            <p class="text-secondary mb-0" th:text="'Welcome, ' + ${userName}"></p>
+            <p class="text-secondary mb-0">Welcome, ${userName}</p>
         </div>
-        <form class="d-flex gap-2" method="get" action="/movies">
-            <input type="hidden" name="type" th:value="${selectedType}" th:if="${selectedType != null and selectedType != 'Trending'}"/>
-            <input class="form-control" name="q" th:value="${query}" placeholder="Search by title or genre">
+        <form class="d-flex gap-2" method="get" action="${ctx}/movies">
+            <c:if test="${selectedType != null and selectedType != 'Trending'}">
+                <input type="hidden" name="type" value="${selectedType}">
+            </c:if>
+            <input class="form-control" name="q" value="${query}" placeholder="Search by title or genre">
             <button type="submit" class="btn btn-dark">Search</button>
         </form>
     </div>
@@ -115,40 +120,46 @@
     <p class="genre-section-label text-secondary text-uppercase small fw-semibold mb-2">Movies by genre</p>
     <div class="genre-scroll mb-4">
         <div class="d-flex gap-2 chip-row">
-            <th:block th:each="ft : ${filterTypes}">
-                <a th:if="${ft == 'Trending'}"
-                   th:href="@{/movies(q=${query})}"
-                   th:class="${ft == selectedType} ? 'genre-chip genre-chip-active' : 'genre-chip genre-chip-inactive'"
-                   th:text="${ft}">Trending</a>
-                <a th:if="${ft != 'Trending'}"
-                   th:href="@{/movies(q=${query},type=${ft})}"
-                   th:class="${ft == selectedType} ? 'genre-chip genre-chip-active' : 'genre-chip genre-chip-inactive'"
-                   th:text="${ft}">Action</a>
-            </th:block>
+            <c:forEach items="${filterTypes}" var="ft">
+                <c:choose>
+                    <c:when test="${ft == 'Trending'}">
+                        <a href="${ctx}/movies?q=${query}"
+                           class="genre-chip ${ft == selectedType ? 'genre-chip-active' : 'genre-chip-inactive'}">${ft}</a>
+                    </c:when>
+                    <c:otherwise>
+                        <a href="${ctx}/movies?q=${query}&amp;type=${ft}"
+                           class="genre-chip ${ft == selectedType ? 'genre-chip-active' : 'genre-chip-inactive'}">${ft}</a>
+                    </c:otherwise>
+                </c:choose>
+            </c:forEach>
         </div>
     </div>
 
     <div class="row g-4">
-        <div class="col-md-6 col-lg-4" th:each="movie : ${movies}">
+        <c:forEach items="${movies}" var="movie">
+        <div class="col-md-6 col-lg-4">
             <div class="card movie-card h-100 shadow-sm">
-                <img th:src="${movie.imageUrl}" class="card-img-top" style="height:220px; object-fit:cover;" alt="poster">
+                <img src="${ctx}${movie.imageUrl}" class="card-img-top" style="height:220px; object-fit:cover;" alt="poster">
                 <div class="card-body d-flex flex-column">
-                    <h5 class="card-title text-dark" th:text="${movie.title}"></h5>
-                    <p class="text-secondary small mb-2" th:text="${movie.genre + ' • ' + movie.duration}"></p>
-                    <p class="card-text small text-secondary" th:text="${movie.description}"></p>
+                    <h5 class="card-title text-dark">${movie.title}</h5>
+                    <p class="text-secondary small mb-2">${movie.genre} &bull; ${movie.duration}</p>
+                    <p class="card-text small text-secondary">${movie.description}</p>
                     <div class="mt-auto d-flex justify-content-between align-items-center">
-                        <span class="fw-semibold text-dark" th:text="'LKR ' + ${movie.normalPrice}"></span>
-                        <a class="btn btn-dark btn-sm" th:href="@{'/movies/' + ${movie.movieId}}">View Details</a>
+                        <span class="fw-semibold text-dark">LKR ${movie.normalPrice}</span>
+                        <a class="btn btn-dark btn-sm" href="${ctx}/movies/${movie.movieId}">View Details</a>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-12" th:if="${#lists.isEmpty(movies)}">
+        </c:forEach>
+        <c:if test="${empty movies}">
+        <div class="col-12">
             <div class="alert alert-secondary border-0">No movies found for your search.</div>
         </div>
+        </c:if>
     </div>
 </div>
 </main>
-<footer th:replace="~{fragments/footer :: footer}"></footer>
+<%@ include file="/WEB-INF/jsp/fragments/footer.jspf" %>
 </body>
 </html>
