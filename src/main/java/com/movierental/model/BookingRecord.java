@@ -55,8 +55,16 @@ public class BookingRecord {
         return seatType;
     }
 
+    public void setSeatType(String seatType) {
+        this.seatType = seatType;
+    }
+
     public double getPrice() {
         return price;
+    }
+
+    public void setPrice(double price) {
+        this.price = price;
     }
 
     public String getStatus() {

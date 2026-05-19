@@ -42,7 +42,11 @@ public class MovieController {
     }
 
     @GetMapping("/movies/{movieId}")
-    public String movieDetails(@PathVariable String movieId, HttpSession session, Model model) {
+    public String movieDetails(
+            @PathVariable String movieId,
+            @RequestParam(required = false) String bookingId,
+            HttpSession session,
+            Model model) {
         if (session.getAttribute("userId") == null) {
             return "redirect:/login";
         }
@@ -50,10 +54,17 @@ public class MovieController {
         if (movie == null) {
             return "redirect:/movies";
         }
+        String userId = (String) session.getAttribute("userId");
+        var editingBooking = bookingService.getEditablePendingBooking(userId, bookingId, movieId).orElse(null);
+        if (bookingId != null && !bookingId.isBlank() && editingBooking == null) {
+            return "redirect:/bookings";
+        }
+        String excludeBookingId = editingBooking != null ? editingBooking.getBookingId() : null;
         model.addAttribute("movie", movie);
         model.addAttribute("reviews", reviewService.getReviewsByMovie(movieId));
-        model.addAttribute("bookedSeats", bookingService.getBookedSeatsByMovie(movieId));
-        model.addAttribute("currentUserId", session.getAttribute("userId"));
+        model.addAttribute("bookedSeats", bookingService.getBookedSeatsByMovie(movieId, excludeBookingId));
+        model.addAttribute("editingBooking", editingBooking);
+        model.addAttribute("currentUserId", userId);
         return "movie-details";
     }
 }

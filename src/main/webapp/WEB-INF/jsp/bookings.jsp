@@ -26,7 +26,7 @@
                 <thead>
                 <tr>
                     <th>Booking ID</th>
-                    <th>Movie ID</th>
+                    <th>Movie</th>
                     <th>Seat No</th>
                     <th>Type</th>
                     <th>Price</th>
@@ -38,22 +38,36 @@
                 <c:forEach items="${bookings}" var="b">
                 <tr>
                     <td>${b.bookingId}</td>
-                    <td>${b.movieId}</td>
                     <td>
-                        <form class="d-flex gap-2" method="post" action="${ctx}/bookings/update">
-                            <input type="hidden" name="bookingId" value="${b.bookingId}">
-                            <input class="form-control form-control-sm" name="seatNumber" value="${b.seatNumber}" required>
-                            <button class="btn btn-sm btn-outline-primary">Save</button>
-                        </form>
+                        <c:set var="movieTitle" value="${b.movieId}"/>
+                        <c:forEach items="${movies}" var="m">
+                            <c:if test="${m.movieId == b.movieId}">
+                                <c:set var="movieTitle" value="${m.title}"/>
+                            </c:if>
+                        </c:forEach>
+                        ${movieTitle}
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <span class="fw-semibold">${b.seatNumber}</span>
+                            <c:if test="${b.status == 'PENDING'}">
+                                <a class="btn btn-sm btn-outline-primary"
+                                   href="${ctx}/movies/${b.movieId}?bookingId=${b.bookingId}">
+                                    UPDATE
+                                </a>
+                            </c:if>
+                        </div>
                     </td>
                     <td>${b.seatType}</td>
                     <td>LKR ${b.price}</td>
                     <td><span class="badge text-bg-secondary">${b.status}</span></td>
-                    <td class="d-flex gap-1">
-                        <form method="post" action="${ctx}/bookings/confirm">
-                            <input type="hidden" name="bookingId" value="${b.bookingId}">
-                            <button class="btn btn-sm btn-success">Confirm</button>
-                        </form>
+                    <td class="d-flex flex-wrap gap-1">
+                        <c:if test="${b.status == 'PENDING'}">
+                            <form method="post" action="${ctx}/bookings/confirm">
+                                <input type="hidden" name="bookingId" value="${b.bookingId}">
+                                <button class="btn btn-sm btn-success">Confirm</button>
+                            </form>
+                        </c:if>
                         <form method="post" action="${ctx}/bookings/delete">
                             <input type="hidden" name="bookingId" value="${b.bookingId}">
                             <button class="btn btn-sm btn-danger">Delete</button>

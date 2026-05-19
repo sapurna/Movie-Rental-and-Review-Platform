@@ -56,6 +56,22 @@ public class BookingController {
         return "redirect:/bookings";
     }
 
+    @PostMapping("/bookings/update-seat")
+    public String updateSeatFromMap(
+            @RequestParam String bookingId,
+            @RequestParam String movieId,
+            @RequestParam(name = "seatSelections", required = false) java.util.List<String> seatSelections,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+        String userId = (String) session.getAttribute("userId");
+        if (userId == null) {
+            return "redirect:/login";
+        }
+        redirectAttributes.addFlashAttribute("message",
+                bookingService.updateBookingSeatFromSelection(userId, bookingId, seatSelections));
+        return "redirect:/bookings";
+    }
+
     @PostMapping("/bookings/delete")
     public String deleteBooking(@RequestParam String bookingId, HttpSession session, RedirectAttributes redirectAttributes) {
         String userId = (String) session.getAttribute("userId");
