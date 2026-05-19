@@ -519,8 +519,12 @@
     align-items: center;
     justify-content: center;
     padding: 0;
-    cursor: default;
+    cursor: pointer;
     opacity: 0.92;
+}
+
+.profile-cam-btn:hover {
+    background: #0f172a;
 }
 
 .profile-card-body {
@@ -668,4 +672,152 @@ body.modal-open .modal-backdrop.show {
 .pwd-modal-submit:hover {
     color: #ffffff;
     filter: brightness(1.04);
+}
+
+/* Cinevora site branding */
+.cinevora-page {
+    min-height: 100vh;
+}
+
+.cinevora-navbar {
+    background: #ffffff !important;
+    box-shadow: 0 1px 0 rgba(15, 23, 42, 0.06);
+}
+
+.cinevora-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    text-decoration: none;
+    color: #0f172a;
+}
+
+.cinevora-brand:hover {
+    color: #0f172a;
+}
+
+.cinevora-brand__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 0.55rem;
+    background: linear-gradient(135deg, #3b82f6 0%, #7c3aed 100%);
+    color: #ffffff;
+    font-size: 1rem;
+}
+
+.cinevora-brand__text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.15;
+}
+
+.cinevora-brand__name {
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.cinevora-brand__tagline {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #64748b;
+}
+
+.cinevora-site-header {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 45%, #3730a3 100%);
+    color: #ffffff;
+    padding: 2.25rem 0;
+}
+
+.cinevora-site-header__eyebrow {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    opacity: 0.75;
+}
+
+.cinevora-site-header__title {
+    font-size: clamp(2rem, 5vw, 2.85rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+}
+
+.cinevora-site-header__tagline {
+    font-size: 1.05rem;
+    max-width: 38rem;
+    opacity: 0.88;
+}
+
+.cinevora-footer {
+    background: #0f172a;
+    color: #e2e8f0;
+    padding: 2.75rem 0 1.75rem;
+    margin-top: auto;
+}
+
+.cinevora-footer-brand {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: -0.02em;
+}
+
+.cinevora-footer-text {
+    font-size: 0.9rem;
+    color: #94a3b8;
+    max-width: 22rem;
+}
+
+.cinevora-footer-heading {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #ffffff;
+    margin-bottom: 0.85rem;
+}
+
+.cinevora-footer-links a {
+    color: #cbd5e1;
+    text-decoration: none;
+    font-size: 0.9rem;
+    line-height: 1.9;
+}
+
+.cinevora-footer-links a:hover {
+    color: #ffffff;
+}
+
+.cinevora-footer-muted {
+    font-size: 0.9rem;
+    color: #94a3b8;
+}
+
+.cinevora-footer-divider {
+    border-color: rgba(148, 163, 184, 0.25);
+    margin: 2rem 0 1.25rem;
+}
+
+.cinevora-footer-copy {
+    font-size: 0.8rem;
+    color: #94a3b8;
+}
+
+.cinevora-auth-heading {
+    text-align: center;
+    padding: 1.5rem 1rem 0.5rem;
+}
+
+.cinevora-auth-heading .cinevora-brand {
+    justify-content: center;
+}
+
+.cinevora-auth-heading .cinevora-brand__name {
+    font-size: 1.75rem;
 }

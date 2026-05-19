@@ -1,12 +1,15 @@
 package com.movierental.model;
 
 public class User {
+    public static final String DEFAULT_PROFILE_IMAGE = "/posters/profile_pic.png";
+
     private String userId;
     private String fullName;
     private String email;
     private String password;
     private String phone;
     private String accountType;
+    private String profileImageUrl;
 
     public User() {
     }
@@ -21,7 +24,14 @@ public class User {
     }
 
     public String toRecord() {
-        return String.join("|", userId, fullName, email, password, phone, accountType == null ? "CUSTOMER" : accountType);
+        return String.join("|",
+                userId,
+                fullName,
+                email,
+                password,
+                phone,
+                accountType == null ? "CUSTOMER" : accountType,
+                profileImageUrl == null ? "" : profileImageUrl);
     }
 
     public static User fromRecord(String record) {
@@ -30,7 +40,17 @@ public class User {
             return null;
         }
         String accountType = parts.length >= 6 ? parts[5] : "CUSTOMER";
-        return new User(parts[0], parts[1], parts[2], parts[3], parts[4], accountType);
+        User user = new User(parts[0], parts[1], parts[2], parts[3], parts[4], accountType);
+        if (parts.length >= 7 && parts[6] != null && !parts[6].isBlank()) {
+            user.setProfileImageUrl(parts[6]);
+        }
+        return user;
+    }
+
+    public String getDisplayProfileImageUrl() {
+        return profileImageUrl == null || profileImageUrl.isBlank()
+                ? DEFAULT_PROFILE_IMAGE
+                : profileImageUrl;
     }
 
     public String getUserId() {
@@ -79,5 +99,13 @@ public class User {
 
     public void setAccountType(String accountType) {
         this.accountType = accountType;
+    }
+
+    public String getProfileImageUrl() {
+        return profileImageUrl;
+    }
+
+    public void setProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
     }
 }

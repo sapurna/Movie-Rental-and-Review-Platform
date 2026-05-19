@@ -1,6 +1,7 @@
 package com.movierental.service;
 
 import com.movierental.model.User;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Optional;
 
@@ -11,10 +12,13 @@ public interface AuthService {
 
     Optional<User> getUserById(String userId);
 
-    String updateProfile(String userId, String fullName, String phone);
-
     /**
      * @return "SUCCESS" or an error message
      */
     String changePassword(String userId, String oldPassword, String newPassword, String confirmPassword);
+
+    /**
+     * @return "SUCCESS" or an error message
+     */
+    String uploadProfilePicture(String userId, MultipartFile photo);
 }

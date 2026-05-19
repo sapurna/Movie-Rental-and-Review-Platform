@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<nav th:fragment="navbar" class="navbar navbar-expand-lg cinevora-navbar border-bottom">
+    <div class="container">
+        <a class="navbar-brand cinevora-brand" href="/movies">
+            <span class="cinevora-brand__icon" aria-hidden="true"><i class="fa-solid fa-clapperboard"></i></span>
+            <span class="cinevora-brand__text">
+                <span class="cinevora-brand__name">Cinevora</span>
+                <span class="cinevora-brand__tagline">Movie Rental &amp; Reviews</span>
+            </span>
+        </a>
+        <div class="d-flex gap-2 flex-wrap">
+            <a class="btn btn-outline-dark btn-sm" href="/movies">Movies</a>
+            <a class="btn btn-outline-dark btn-sm" href="/bookings">My Bookings</a>
+            <a class="btn btn-outline-dark btn-sm" href="/profile">Profile</a>
+            <a class="btn btn-dark btn-sm" href="/logout">Logout</a>
+        </div>
+    </div>
+</nav>
+</body>
+</html>

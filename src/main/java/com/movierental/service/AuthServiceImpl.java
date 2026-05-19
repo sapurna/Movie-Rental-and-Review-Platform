@@ -3,6 +3,7 @@ package com.movierental.service;
 import com.movierental.model.User;
 import com.movierental.repository.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -10,9 +11,11 @@ import java.util.UUID;
 @Service
 public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
+    private final ProfilePictureService profilePictureService;
 
-    public AuthServiceImpl(UserRepository userRepository) {
+    public AuthServiceImpl(UserRepository userRepository, ProfilePictureService profilePictureService) {
         this.userRepository = userRepository;
+        this.profilePictureService = profilePictureService;
     }
 
     @Override
@@ -47,16 +50,22 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public String updateProfile(String userId, String fullName, String phone) {
+    public String uploadProfilePicture(String userId, MultipartFile photo) {
         Optional<User> userOptional = userRepository.findById(userId);
         if (userOptional.isEmpty()) {
             return "User not found.";
         }
-        User user = userOptional.get();
-        user.setFullName(fullName == null ? user.getFullName() : fullName.trim());
-        user.setPhone(phone == null ? user.getPhone() : phone.trim());
-        userRepository.update(user);
-        return "SUCCESS";
+        try {
+            String imageUrl = profilePictureService.saveProfilePicture(userId, photo);
+            User user = userOptional.get();
+            user.setProfileImageUrl(imageUrl);
+            userRepository.update(user);
+            return "SUCCESS";
+        } catch (IllegalArgumentException ex) {
+            return ex.getMessage();
+        } catch (Exception ex) {
+            return "Unable to save profile photo. Please try again.";
+        }
     }
 
     @Override

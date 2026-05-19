@@ -6,6 +6,7 @@ com\movierental\model\Review.class
 com\movierental\model\PremiumBooking.class
 com\movierental\model\NormalBooking.class
 com\movierental\repository\ReviewRepository.class
+com\movierental\service\ProfilePictureService.class
 com\movierental\service\MovieService.class
 com\movierental\model\User.class
 com\movierental\repository\MovieRepository.class

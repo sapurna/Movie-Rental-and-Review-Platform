@@ -9,6 +9,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
@@ -87,28 +88,32 @@ public class AuthController {
             return "redirect:/logout";
         }
         model.addAttribute("user", user);
+        model.addAttribute("profileImageSrc", user.getDisplayProfileImageUrl());
         model.addAttribute("totalBookedTickets", bookingService.getUserBookings(userId).size());
         return "profile";
     }
 
-    @GetMapping("/profile/update")
-    public String updateProfileGet() {
+    @GetMapping("/profile/upload-photo")
+    public String uploadProfilePhotoGet() {
         return "redirect:/profile";
     }
 
-    @PostMapping("/profile/update")
-    public String updateProfile(
-            @RequestParam String fullName,
-            @RequestParam String phone,
+    @PostMapping("/profile/upload-photo")
+    public String uploadProfilePhoto(
+            @RequestParam("photo") MultipartFile photo,
             RedirectAttributes redirectAttributes,
             HttpSession session) {
         String userId = (String) session.getAttribute("userId");
         if (userId == null) {
             return "redirect:/login";
         }
-        String result = authService.updateProfile(userId, fullName, phone);
-        redirectAttributes.addFlashAttribute("message",
-                "SUCCESS".equals(result) ? "Profile updated successfully." : result);
+        String result = authService.uploadProfilePicture(userId, photo);
+        if ("SUCCESS".equals(result)) {
+            redirectAttributes.addFlashAttribute("message", "Profile photo updated successfully.");
+        } else {
+            redirectAttributes.addFlashAttribute("photoError", result);
+            redirectAttributes.addFlashAttribute("openPhotoModal", true);
+        }
         return "redirect:/profile";
     }
 
