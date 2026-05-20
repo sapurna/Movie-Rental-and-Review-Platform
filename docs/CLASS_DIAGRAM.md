@@ -1,338 +1,535 @@
-# Cinevora — Movie Rental and Review Platform  
-## Class Diagrams (SE1020)
+# Movie Rental and Review Platform — Full Class Diagram
 
-Simple diagrams for your report. Paste any block into [Mermaid Live](https://mermaid.live) to export as PNG/SVG.
-
----
-
-## 1. System layers (overview)
-
-```mermaid
-flowchart TB
-    Browser --> JSP["JSP Pages"]
-    JSP --> Controller["Controllers"]
-    Controller --> Service["Services"]
-    Service --> Repository["Repositories"]
-    Repository --> FileStorage
-    FileStorage --> TXT["users.txt, movies.txt,\nbookings.txt, reviews.txt"]
-    Service --> Model["Domain Models"]
-    ProfilePictureService --> Uploads["uploads/profiles/"]
-```
+**Project:** Cinevora (Spring Boot 3.3 · JSP · File-based persistence)  
+**Scope:** All application classes and **main** operations for authentication, movies, seat booking, and reviews.
 
 ---
 
-## 2. Full class diagram (all classes)
+## 1. UML Legend (Relationships)
 
-Shows every class and main relationships. Methods are summarized to keep the chart readable.
+| Symbol / Notation | Meaning | Used in this project |
+|-------------------|---------|----------------------|
+| `△` (empty triangle) | **Generalization / Inheritance** | `NormalBooking`, `PremiumBooking` extend `Booking` |
+| `△` (dashed) | **Interface realization** | `AuthServiceImpl` implements `AuthService` |
+| `──>` solid arrow | **Association / uses** | Controller → Service, Service → Repository |
+| `..>` dashed arrow | **Dependency** | `Booking.calculatePrice(Movie)`, `FileStorage` I/O |
+| `1` | Exactly one | One `User` per booking row (by `userId`) |
+| `0..1` | Zero or one | Optional `Movie` lookup when booking |
+| `1..*` / `*` | One-to-many / many | User has many bookings and reviews |
+| `*..*` | **Many-to-many** | Users ↔ Movies via `Review` (association entity) |
+
+**Persistence note:** `BookingRecord`, `Review`, `User`, and `Movie` are linked by **ID fields** (`userId`, `movieId`) in flat files—not JPA entities. Multiplicities describe the **domain model**, not database foreign keys.
+
+---
+
+## 2. Complete Class Diagram (All Classes & Main Relationships)
+
+Copy the diagram below into [Mermaid Live Editor](https://mermaid.live) or any Markdown viewer that supports Mermaid for export to PNG/SVG.
 
 ```mermaid
 classDiagram
     direction TB
 
-    %% --- Entry ---
-    class MovieRentalApplication {
-        +main()
-    }
-
-    %% --- Controllers ---
-    class AuthController {
-        -authService
-        -bookingService
-        +login()
-        +register()
-        +profile()
-        +uploadProfilePhoto()
-        +changePassword()
-        +logout()
-    }
-
-    class MovieController {
-        -movieService
-        -reviewService
-        -bookingService
-        +movies()
-        +movieDetails()
-    }
-
-    class BookingController {
-        -bookingService
-        -movieService
-        +addToCart()
-        +viewBookings()
-        +updateSeat()
-        +updateSeatFromMap()
-        +confirmBooking()
-        +deleteBooking()
-    }
-
-    class ReviewController {
-        -reviewService
-        +addReview()
-        +deleteOwnReview()
-    }
-
-    class WebMvcConfig {
-        +addResourceHandlers()
-    }
-
-    %% --- Services ---
-    class AuthService {
-        <<interface>>
-        +login()
-        +register()
-        +getUserById()
-        +changePassword()
-        +uploadProfilePicture()
-    }
-
-    class AuthServiceImpl {
-        -userRepository
-        -profilePictureService
-    }
-
-    class MovieService {
-        -movieRepository
-        +getAllMovies()
-        +getMovieById()
-    }
-
-    class BookingService {
-        -bookingRepository
-        -movieService
-        +getUserBookings()
-        +getBookedSeatsByMovie()
-        +addMultipleToCart()
-        +updateBookingSeatFromSelection()
-        +confirmBooking()
-        +deleteBooking()
-    }
-
-    class ReviewService {
-        -reviewRepository
-        +getReviewsByMovie()
-        +addReview()
-        +deleteOwnReview()
-    }
-
-    class ProfilePictureService {
-        +saveProfilePicture()
-    }
-
-    %% --- Repositories ---
-    class FileStorage {
-        +readAll()
-        +writeAll()
-    }
-
-    class UserRepository {
-        +findAll()
-        +findByEmail()
-        +findById()
-        +save()
-        +update()
-    }
-
-    class MovieRepository {
-        +findAll()
-        +findById()
-        +saveAll()
-    }
-
-    class BookingRepository {
-        +findAll()
-        +findById()
-        +save()
-        +update()
-        +delete()
-    }
-
-    class ReviewRepository {
-        +findAll()
-        +save()
-        +delete()
-    }
-
-    %% --- Models ---
+    %% ========== DOMAIN MODEL ==========
     class User {
-        -userId
-        -fullName
-        -email
-        -password
-        -phone
-        -profileImageUrl
-        +toRecord()
-        +fromRecord()
+        -String userId
+        -String fullName
+        -String email
+        -String password
+        -String phone
+        -String accountType
+        -String profileImageUrl
+        +getDisplayProfileImageUrl() String
+        +toRecord() String
+        +fromRecord(row) User$
     }
 
     class Movie {
-        -movieId
-        -title
-        -genre
-        -normalPrice
-        -premiumPrice
-        +toRecord()
-        +fromRecord()
-    }
-
-    class Review {
-        -reviewId
-        -userId
-        -movieId
-        -rating
-        -comment
-        +toRecord()
-        +fromRecord()
+        -String movieId
+        -String title
+        -String genre
+        -String duration
+        -double normalPrice
+        -double premiumPrice
+        -String description
+        -String imageUrl
+        +toRecord() String
+        +fromRecord(row) Movie$
     }
 
     class Booking {
         <<abstract>>
-        #bookingId
-        #seatNumber
-        #seatType
-        +calculatePrice()*
+        #String bookingId
+        #String userId
+        #String movieId
+        #String seatNumber
+        #String seatType
+        #String status
+        +calculatePrice(movie) double*
+        +getBookingId() String
+        +getSeatType() String
     }
 
     class NormalBooking {
-        +calculatePrice()
+        +calculatePrice(movie) double
     }
 
     class PremiumBooking {
-        +calculatePrice()
+        +calculatePrice(movie) double
     }
 
     class BookingRecord {
-        -bookingId
-        -userId
-        -movieId
-        -seatNumber
-        -price
-        -status
-        +toRecord()
-        +fromRecord()
+        -String bookingId
+        -String userId
+        -String movieId
+        -String seatNumber
+        -String seatType
+        -double price
+        -String status
+        +toRecord() String
+        +fromRecord(row) BookingRecord$
+        +setSeatNumber(seat) void
+        +setStatus(status) void
     }
 
-    %% --- Inheritance & interfaces ---
-    AuthServiceImpl ..|> AuthService
-    NormalBooking --|> Booking
-    PremiumBooking --|> Booking
-    Booking ..> Movie : uses for price
+    class Review {
+        -String reviewId
+        -String userId
+        -String movieId
+        -int rating
+        -String comment
+        +toRecord() String
+        +fromRecord(row) Review$
+    }
 
-    %% --- Controller uses Service ---
-    AuthController --> AuthService
-    AuthController --> BookingService
-    MovieController --> MovieService
-    MovieController --> ReviewService
-    MovieController --> BookingService
-    BookingController --> BookingService
-    BookingController --> MovieService
-    ReviewController --> ReviewService
+    %% Inheritance (polymorphism for pricing)
+    Booking <|-- NormalBooking : extends
+    Booking <|-- PremiumBooking : extends
 
-    %% --- Service uses Repository ---
-    AuthServiceImpl --> UserRepository
-    AuthServiceImpl --> ProfilePictureService
-    MovieService --> MovieRepository
-    BookingService --> BookingRepository
-    BookingService --> MovieService
-    ReviewService --> ReviewRepository
+    %% Domain associations (by ID)
+    User "1" --> "0..*" BookingRecord : places
+    Movie "1" --> "0..*" BookingRecord : booked for
+    User "1" --> "0..*" Review : writes
+    Movie "1" --> "0..*" Review : receives
 
-    %% --- Repository uses FileStorage ---
-    UserRepository --> FileStorage
-    MovieRepository --> FileStorage
-    BookingRepository --> FileStorage
-    ReviewRepository --> FileStorage
+    Booking ..> Movie : calculatePrice()
+  BookingRecord ..> User : userId
+  BookingRecord ..> Movie : movieId
+  Review ..> User : userId
+  Review ..> Movie : movieId
 
-    %% --- Repository maps to Model ---
-    UserRepository ..> User
-    MovieRepository ..> Movie
-    BookingRepository ..> BookingRecord
-    ReviewRepository ..> Review
+    %% ========== SERVICE LAYER ==========
+    class AuthService {
+        <<interface>>
+        +login(email, password) Optional~User~
+        +register(...) String
+        +getUserById(userId) Optional~User~
+        +changePassword(...) String
+        +uploadProfilePicture(userId, photo) String
+    }
 
-    %% --- Domain links (by ID in files) ---
-    User "1" --> "*" BookingRecord
-    User "1" --> "*" Review
-    Movie "1" --> "*" BookingRecord
-    Movie "1" --> "*" Review
+    class AuthServiceImpl {
+        -UserRepository userRepository
+        -ProfilePictureService profilePictureService
+        +login(...)
+        +register(...)
+        +changePassword(...)
+        +uploadProfilePicture(...)
+    }
+
+    class ProfilePictureService {
+        +saveProfilePicture(userId, file) String
+    }
+
+    class MovieService {
+        -MovieRepository movieRepository
+        +getAllMovies(query, type) List~Movie~
+        +getMovieById(movieId) Optional~Movie~
+        +getGenreFilterOptions() List~String~
+        -seedMoviesIfEmpty() void
+    }
+
+    class BookingService {
+        -BookingRepository bookingRepository
+        -MovieService movieService
+        +getUserBookings(userId) List~BookingRecord~
+        +getBookedSeatsByMovie(movieId) Set~String~
+        +addMultipleToCart(...) String
+        +updateSeat(...) String
+        +confirmBooking(...) String
+        +deleteBooking(...) String
+    }
+
+    class ReviewService {
+        -ReviewRepository reviewRepository
+        +getReviewsByMovie(movieId) List~Review~
+        +addReview(...) String
+        +deleteOwnReview(...) String
+    }
+
+    AuthService <|.. AuthServiceImpl : implements
+    AuthServiceImpl --> UserRepository : uses
+    AuthServiceImpl --> ProfilePictureService : uses
+    MovieService --> MovieRepository : uses
+    BookingService --> BookingRepository : uses
+    BookingService --> MovieService : uses
+    BookingService ..> Booking : creates
+    BookingService ..> NormalBooking : creates
+    BookingService ..> PremiumBooking : creates
+    BookingService ..> BookingRecord : persists
+    ReviewService --> ReviewRepository : uses
+
+    %% ========== REPOSITORY LAYER ==========
+    class FileStorage {
+        +readAll(fileName) List~String~
+        +writeAll(fileName, rows) void
+    }
+
+    class UserRepository {
+        -FileStorage fileStorage
+        +findAll() List~User~
+        +findByEmail(email) Optional~User~
+        +findById(userId) Optional~User~
+        +save(user) void
+        +update(user) void
+    }
+
+    class MovieRepository {
+        -FileStorage fileStorage
+        +findAll() List~Movie~
+        +findById(movieId) Optional~Movie~
+        +saveAll(movies) void
+    }
+
+    class BookingRepository {
+        -FileStorage fileStorage
+        +findAll() List~BookingRecord~
+        +findById(bookingId) Optional~BookingRecord~
+        +save(record) void
+        +update(record) void
+        +delete(bookingId) void
+    }
+
+    class ReviewRepository {
+        -FileStorage fileStorage
+        +findAll() List~Review~
+        +save(review) void
+        +delete(reviewId) void
+    }
+
+    UserRepository --> FileStorage : users.txt
+    MovieRepository --> FileStorage : movies.txt
+    BookingRepository --> FileStorage : bookings.txt
+    ReviewRepository --> FileStorage : reviews.txt
+
+    UserRepository ..> User : maps
+    MovieRepository ..> Movie : maps
+    BookingRepository ..> BookingRecord : maps
+    ReviewRepository ..> Review : maps
+
+    %% ========== CONTROLLER LAYER ==========
+    class AuthController {
+        -AuthService authService
+        -BookingService bookingService
+        +login() String
+        +register() String
+        +profile() String
+        +uploadProfilePhoto() String
+        +changePassword() String
+        +logout() String
+    }
+
+    class MovieController {
+        -MovieService movieService
+        -ReviewService reviewService
+        -BookingService bookingService
+        +movies() String
+        +movieDetails(movieId) String
+    }
+
+    class BookingController {
+        -BookingService bookingService
+        -MovieService movieService
+        +addToCart() String
+        +viewBookings() String
+        +updateSeat() String
+        +confirmBooking() String
+        +deleteBooking() String
+    }
+
+    class ReviewController {
+        -ReviewService reviewService
+        +addReview() String
+        +deleteOwnReview() String
+    }
+
+    class WebMvcConfig {
+        <<configuration>>
+        +addResourceHandlers(registry) void
+    }
+
+    class MovieRentalApplication {
+        <<SpringBootApplication>>
+        +main(args) void$
+    }
+
+    AuthController --> AuthService : depends
+    AuthController --> BookingService : depends
+    MovieController --> MovieService : depends
+    MovieController --> ReviewService : depends
+    MovieController --> BookingService : depends
+    BookingController --> BookingService : depends
+    BookingController --> MovieService : depends
+    ReviewController --> ReviewService : depends
+
+    %% Controllers use domain via services (indirect)
+    AuthController ..> User : session/profile
+    MovieController ..> Movie : view
+    MovieController ..> Review : view
+    BookingController ..> BookingRecord : view
 ```
 
 ---
 
-## 3. OOP diagram (inheritance & polymorphism)
+## 3. Domain Model Only (Entities & Cardinalities)
 
-Required for SE1020 — shows **encapsulation** (private fields), **inheritance**, and **polymorphism**.
+Focused view for reports/viva: **inheritance**, **1-* , and *-*** on core business objects.
 
 ```mermaid
 classDiagram
+    direction LR
+
+    class User {
+        userId
+        fullName
+        email
+        profileImageUrl
+    }
+
     class Movie {
-        -normalPrice
-        -premiumPrice
+        movieId
+        title
+        genre
+        normalPrice
+        premiumPrice
+    }
+
+    class BookingRecord {
+        bookingId
+        seatNumber
+        seatType
+        price
+        status
+    }
+
+    class Review {
+        reviewId
+        rating
+        comment
     }
 
     class Booking {
         <<abstract>>
-        +calculatePrice(movie)*
+        calculatePrice()
     }
 
-    class NormalBooking {
-        +calculatePrice(movie)
-    }
+    class NormalBooking
+    class PremiumBooking
 
-    class PremiumBooking {
-        +calculatePrice(movie)
-    }
+    Booking <|-- NormalBooking
+    Booking <|-- PremiumBooking
 
-    NormalBooking --|> Booking
-    PremiumBooking --|> Booking
-    Booking ..> Movie
+    User "1" -- "0..*" BookingRecord : places
+    Movie "1" -- "0..*" BookingRecord : has seats booked
+    User "1" -- "0..*" Review : authors
+    Movie "1" -- "0..*" Review : has
 
-    note for Booking "BookingService creates\nNormalBooking or PremiumBooking,\nthen calls calculatePrice(movie)\nto get seat price"
+    User "1" -- "0..*" Review
+    Review "*" -- "1" Movie
+    Review "*" -- "1" User
+
+    note for Review "Association class:\nUser *—* Movie\n(many users review\nmany movies)"
+    note for Booking "Runtime only:\nBookingService creates\nNormal/Premium Booking,\nthen saves BookingRecord"
+```
+
+**Cardinality summary**
+
+| Relationship | Type | Multiplicity |
+|--------------|------|--------------|
+| User → BookingRecord | Association | **1 : 0..*** (one user, many bookings) |
+| Movie → BookingRecord | Association | **1 : 0..*** (one movie, many seat bookings) |
+| User → Review | Association | **1 : 0..*** |
+| Movie → Review | Association | **1 : 0..*** |
+| User ↔ Movie | **Many-to-many** | ***** : ***** (via Review) |
+| Booking → NormalBooking / PremiumBooking | **Inheritance** | IS-A (generalization) |
+| Booking → Movie | Dependency | uses at pricing time |
+
+---
+
+## 4. Layered Architecture (Main Functions by Module)
+
+```mermaid
+flowchart TB
+    subgraph Presentation["Presentation Layer (Controllers)"]
+        AC[AuthController<br/>login · register · profile · password · photo]
+        MC[MovieController<br/>browse · movie details]
+        BC[BookingController<br/>add cart · list · update · confirm · delete]
+        RC[ReviewController<br/>add · delete review]
+    end
+
+    subgraph Business["Business Layer (Services)"]
+        AS[AuthService / AuthServiceImpl]
+        MS[MovieService]
+        BS[BookingService]
+        RS[ReviewService]
+        PS[ProfilePictureService]
+    end
+
+    subgraph Data["Data Access Layer (Repositories)"]
+        UR[UserRepository]
+        MR[MovieRepository]
+        BR[BookingRepository]
+        RR[ReviewRepository]
+        FS[FileStorage]
+    end
+
+    subgraph Domain["Domain Model"]
+        U[User]
+        M[Movie]
+        BRc[BookingRecord]
+        Rv[Review]
+        B[Booking hierarchy]
+    end
+
+    subgraph Files["Flat Files"]
+        F1[(users.txt)]
+        F2[(movies.txt)]
+        F3[(bookings.txt)]
+        F4[(reviews.txt)]
+        F5[(uploads/profiles/)]
+    end
+
+    AC --> AS
+    AC --> BS
+    MC --> MS
+    MC --> RS
+    MC --> BS
+    BC --> BS
+    BC --> MS
+    RC --> RS
+
+    AS --> UR
+    AS --> PS
+    MS --> MR
+    BS --> BR
+    BS --> B
+    RS --> RR
+
+    UR --> FS
+    MR --> FS
+    BR --> FS
+    RR --> FS
+
+    FS --> F1
+    FS --> F2
+    FS --> F3
+    FS --> F4
+    PS --> F5
+
+    UR -.-> U
+    MR -.-> M
+    BR -.-> BRc
+    RR -.-> Rv
 ```
 
 ---
 
-## 4. Data files
+## 5. Main Functions per Class (Quick Reference)
 
-| File | What it stores |
-|------|----------------|
-| `users.txt` | Registered users |
-| `movies.txt` | Movie catalogue |
-| `bookings.txt` | Seat bookings |
-| `reviews.txt` | Movie reviews |
-| `uploads/profiles/` | Profile photos (images) |
+### 5.1 Authentication & profile
 
-All text files use **pipe-separated** values (`|`). Example booking row:  
-`bookingId|userId|movieId|seatNumber|seatType|price|status`
+| Class | Main functions |
+|-------|----------------|
+| **AuthController** | `login`, `register`, `profile`, `uploadProfilePhoto`, `changePassword`, `logout` |
+| **AuthService** | `login`, `register`, `getUserById`, `changePassword`, `uploadProfilePicture` |
+| **AuthServiceImpl** | Implements auth; delegates photo save to **ProfilePictureService** |
+| **ProfilePictureService** | `saveProfilePicture` → writes `uploads/profiles/{userId}.ext` |
+| **UserRepository** | `findByEmail`, `findById`, `save`, `update` |
+| **User** | Registration data, profile image URL, `toRecord` / `fromRecord` |
+
+### 5.2 Movies & browsing
+
+| Class | Main functions |
+|-------|----------------|
+| **MovieController** | `movies` (search + genre filter), `movieDetails` (seats + reviews) |
+| **MovieService** | `getAllMovies`, `getMovieById`, `getGenreFilterOptions`, seed data |
+| **MovieRepository** | `findAll`, `findById`, `saveAll` |
+| **Movie** | Catalog entity (title, genre, prices, poster) |
+
+### 5.3 Booking (seat rental)
+
+| Class | Main functions |
+|-------|----------------|
+| **BookingController** | `addToCart`, `viewBookings`, `updateSeat`, `confirmBooking`, `deleteBooking` |
+| **BookingService** | Cart CRUD, seat conflict checks, price via **Booking** polymorphism |
+| **Booking** *(abstract)* | `calculatePrice(Movie)` — strategy pattern |
+| **NormalBooking** | Price = `movie.normalPrice` |
+| **PremiumBooking** | Price = `movie.premiumPrice` |
+| **BookingRecord** | Persisted booking row (PENDING / CONFIRMED) |
+| **BookingRepository** | `save`, `update`, `delete`, `findById` |
+
+### 5.4 Reviews
+
+| Class | Main functions |
+|-------|----------------|
+| **ReviewController** | `addReview`, `deleteOwnReview` |
+| **ReviewService** | `getReviewsByMovie`, `addReview`, `deleteOwnReview` |
+| **ReviewRepository** | `findAll`, `save`, `delete` |
+| **Review** | Links `userId` + `movieId` + rating + comment |
+
+### 5.5 Infrastructure
+
+| Class | Role |
+|-------|------|
+| **FileStorage** | Read/write pipe-delimited lines under `src/main/resources/data/` |
+| **WebMvcConfig** | Serves `/posters/profiles/**` from disk |
+| **MovieRentalApplication** | Spring Boot entry point |
 
 ---
 
-## 5. Class list (23 classes)
+## 6. Design Patterns Used
 
-| Package | Class | Role |
-|---------|-------|------|
-| root | `MovieRentalApplication` | Starts the app |
-| `config` | `WebMvcConfig` | Serves profile images |
-| `controller` | `AuthController` | Login, register, profile |
-| `controller` | `MovieController` | Movie list & details |
-| `controller` | `BookingController` | Bookings CRUD |
-| `controller` | `ReviewController` | Reviews |
-| `service` | `AuthService` | Auth interface |
-| `service` | `AuthServiceImpl` | Auth logic |
-| `service` | `MovieService` | Movie logic |
-| `service` | `BookingService` | Booking logic |
-| `service` | `ReviewService` | Review logic |
-| `service` | `ProfilePictureService` | Upload profile photo |
-| `repository` | `FileStorage` | Read/write files |
-| `repository` | `UserRepository` | User data |
-| `repository` | `MovieRepository` | Movie data |
-| `repository` | `BookingRepository` | Booking data |
-| `repository` | `ReviewRepository` | Review data |
-| `model` | `User` | User entity |
-| `model` | `Movie` | Movie entity |
-| `model` | `Review` | Review entity |
-| `model` | `Booking` | Abstract booking |
-| `model` | `NormalBooking` | Normal seat price |
-| `model` | `PremiumBooking` | Premium seat price |
-| `model` | `BookingRecord` | Saved booking row |
+| Pattern | Where | Purpose |
+|---------|--------|---------|
+| **MVC** | Controllers → Services → JSP views | Separation of concerns |
+| **Repository** | `*Repository` + `FileStorage` | Hide file persistence |
+| **Strategy / Polymorphism** | `NormalBooking` / `PremiumBooking` | Different seat pricing |
+| **DTO / persistence model** | `Booking` (logic) vs `BookingRecord` (storage) | Calculate in memory, store flat record |
+| **Dependency injection** | Spring `@Service`, `@Repository`, constructors | Loose coupling |
+| **Association entity** | `Review` | Many users review many movies |
 
 ---
 
-*Cinevora — SE1020 Movie Rental and Review Platform*
+## 7. Class Inventory (24 classes)
+
+| Package | Classes |
+|---------|---------|
+| `com.movierental` | `MovieRentalApplication` |
+| `com.movierental.config` | `WebMvcConfig` |
+| `com.movierental.controller` | `AuthController`, `MovieController`, `BookingController`, `ReviewController` |
+| `com.movierental.service` | `AuthService`, `AuthServiceImpl`, `MovieService`, `BookingService`, `ReviewService`, `ProfilePictureService` |
+| `com.movierental.repository` | `FileStorage`, `UserRepository`, `MovieRepository`, `BookingRepository`, `ReviewRepository` |
+| `com.movierental.model` | `User`, `Movie`, `Booking`, `NormalBooking`, `PremiumBooking`, `BookingRecord`, `Review` |
+
+---
+
+## 8. Exporting for Your Report
+
+1. Open [https://mermaid.live](https://mermaid.live).
+2. Paste **Section 2** (complete diagram) or **Section 3** (domain-only).
+3. Export as **PNG** or **SVG** for Word/PDF.
+4. For PlantUML tools, use the same structure: packages `model`, `service`, `repository`, `controller` with the relationships above.
+
+---
+
+*Generated from source code in `src/main/java/com/movierental/` — Movie Rental and Review Platform (Cinevora).*

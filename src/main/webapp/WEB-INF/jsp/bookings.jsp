@@ -32,6 +32,7 @@
                     <th>Price</th>
                     <th>Status</th>
                     <th>Actions</th>
+                    <th>Payment</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -73,11 +74,31 @@
                             <button class="btn btn-sm btn-danger">Delete</button>
                         </form>
                     </td>
+                    <td>
+                        <c:choose>
+                            <c:when test="${b.status == 'CONFIRMED'}">
+                                <button type="button"
+                                        class="btn btn-sm btn-primary"
+                                        disabled
+                                        title="Proceed to payment — not available yet">
+                                    Proceed
+                                </button>
+                            </c:when>
+                            <c:otherwise>
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-secondary"
+                                        disabled
+                                        title="Confirm booking before payment">
+                                    Proceed
+                                </button>
+                            </c:otherwise>
+                        </c:choose>
+                    </td>
                 </tr>
                 </c:forEach>
                 <c:if test="${empty bookings}">
                 <tr>
-                    <td colspan="7" class="text-center text-muted py-4">No bookings yet.</td>
+                    <td colspan="8" class="text-center text-muted py-4">No bookings yet.</td>
                 </tr>
                 </c:if>
                 </tbody>
