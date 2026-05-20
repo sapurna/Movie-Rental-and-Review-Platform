@@ -71,6 +71,9 @@ public class AuthController {
         String result = authService.register(fullName, email, password, phone);
         if (!"SUCCESS".equals(result)) {
             model.addAttribute("error", result);
+            model.addAttribute("fullName", fullName);
+            model.addAttribute("email", email);
+            model.addAttribute("phone", phone);
             return "register";
         }
         model.addAttribute("success", "Registration successful. Please log in.");

@@ -2,6 +2,7 @@ package com.movierental.service;
 
 import com.movierental.model.User;
 import com.movierental.repository.UserRepository;
+import com.movierental.util.RegistrationValidator;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,18 +27,31 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public String register(String fullName, String email, String password, String phone) {
-        if (fullName == null || fullName.isBlank() || email == null || email.isBlank() || password == null || password.length() < 4) {
-            return "Please provide valid registration details.";
+        String nameError = RegistrationValidator.validateFullName(fullName);
+        if (nameError != null) {
+            return nameError;
         }
-        if (userRepository.findByEmail(email).isPresent()) {
+        String emailError = RegistrationValidator.validateEmail(email);
+        if (emailError != null) {
+            return emailError;
+        }
+        String phoneError = RegistrationValidator.validatePhone(phone);
+        if (phoneError != null) {
+            return phoneError;
+        }
+        if (password == null || password.length() < 4) {
+            return "Password must be at least 4 characters.";
+        }
+        String normalizedEmail = RegistrationValidator.normalizeEmail(email);
+        if (userRepository.findByEmail(normalizedEmail).isPresent()) {
             return "Email is already registered.";
         }
         User user = new User(
                 UUID.randomUUID().toString(),
-                fullName.trim(),
-                email.trim().toLowerCase(),
+                RegistrationValidator.normalizeFullName(fullName),
+                normalizedEmail,
                 password,
-                phone == null ? "" : phone.trim(),
+                RegistrationValidator.normalizePhone(phone),
                 "CUSTOMER"
         );
         userRepository.save(user);

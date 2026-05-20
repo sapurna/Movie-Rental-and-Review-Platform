@@ -291,78 +291,24 @@ classDiagram
 
 ---
 
-## 3. Domain Model Only (Entities & Cardinalities)
+## 3. Domain Model Only (7 Main Classes — Full Diagram)
 
-Focused view for reports/viva: **inheritance**, **1-* , and *-*** on core business objects.
+**See also:** [`MODEL_CLASS_DIAGRAM.md`](MODEL_CLASS_DIAGRAM.md) — complete attributes, methods, inheritance, **1 : 0..***, **\* : \***, and dependency chart for:
 
-```mermaid
-classDiagram
-    direction LR
-
-    class User {
-        userId
-        fullName
-        email
-        profileImageUrl
-    }
-
-    class Movie {
-        movieId
-        title
-        genre
-        normalPrice
-        premiumPrice
-    }
-
-    class BookingRecord {
-        bookingId
-        seatNumber
-        seatType
-        price
-        status
-    }
-
-    class Review {
-        reviewId
-        rating
-        comment
-    }
-
-    class Booking {
-        <<abstract>>
-        calculatePrice()
-    }
-
-    class NormalBooking
-    class PremiumBooking
-
-    Booking <|-- NormalBooking
-    Booking <|-- PremiumBooking
-
-    User "1" -- "0..*" BookingRecord : places
-    Movie "1" -- "0..*" BookingRecord : has seats booked
-    User "1" -- "0..*" Review : authors
-    Movie "1" -- "0..*" Review : has
-
-    User "1" -- "0..*" Review
-    Review "*" -- "1" Movie
-    Review "*" -- "1" User
-
-    note for Review "Association class:\nUser *—* Movie\n(many users review\nmany movies)"
-    note for Booking "Runtime only:\nBookingService creates\nNormal/Premium Booking,\nthen saves BookingRecord"
-```
+`User` · `Movie` · `Booking` · `NormalBooking` · `PremiumBooking` · `BookingRecord` · `Review`
 
 **Cardinality summary**
 
 | Relationship | Type | Multiplicity |
 |--------------|------|--------------|
-| User → BookingRecord | Association | **1 : 0..*** (one user, many bookings) |
-| Movie → BookingRecord | Association | **1 : 0..*** (one movie, many seat bookings) |
+| User → BookingRecord | Association | **1 : 0..*** |
+| Movie → BookingRecord | Association | **1 : 0..*** |
 | User → Review | Association | **1 : 0..*** |
 | Movie → Review | Association | **1 : 0..*** |
-| User ↔ Movie | **Many-to-many** | ***** : ***** (via Review) |
-| Booking → NormalBooking / PremiumBooking | **Inheritance** | IS-A (generalization) |
-| Booking → Movie | Dependency | uses at pricing time |
+| User ↔ Movie | **Many-to-many** | ***** : ***** (via `Review`) |
+| NormalBooking / PremiumBooking → Booking | **Inheritance** | IS-A |
+| Booking → Movie | Dependency | `calculatePrice(Movie)` |
+| Booking → BookingRecord | Dependency | persisted after pricing |
 
 ---
 
@@ -526,7 +472,7 @@ flowchart TB
 ## 8. Exporting for Your Report
 
 1. Open [https://mermaid.live](https://mermaid.live).
-2. Paste **Section 2** (complete diagram) or **Section 3** (domain-only).
+2. Paste **Section 2** (full application) or **`MODEL_CLASS_DIAGRAM.md` Section 2** (domain models only).
 3. Export as **PNG** or **SVG** for Word/PDF.
 4. For PlantUML tools, use the same structure: packages `model`, `service`, `repository`, `controller` with the relationships above.
 

@@ -16,6 +16,7 @@ com\movierental\controller\MovieController.class
 com\movierental\controller\ReviewController.class
 com\movierental\controller\AuthController.class
 com\movierental\repository\FileStorage.class
+com\movierental\util\RegistrationValidator.class
 com\movierental\repository\UserRepository.class
 com\movierental\service\AuthService.class
 com\movierental\repository\BookingRepository.class
